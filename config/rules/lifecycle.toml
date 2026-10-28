@@ -1,0 +1,243 @@
+# Lifecycle (end-of-support) rules.  DATA, not code: edit here, never in the engine.
+# Every date below is "verified = false": it comes from Aivar engineering knowledge and must be
+# checked against the vendor lifecycle page named in "source" before it is shown to a customer.
+# The deck and the Exceptions sheet carry this caveat automatically while any rule is unverified.
+
+[meta]
+version = "0.1"
+approaching_months = 18
+
+[[rule]]
+kind = "os"
+key = "windows_server_2003"
+label = "Windows Server 2003"
+end_of_support = "2015-07-14"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2008"
+label = "Windows Server 2008"
+end_of_support = "2020-01-14"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2008_r2"
+label = "Windows Server 2008 R2"
+end_of_support = "2020-01-14"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2012"
+label = "Windows Server 2012"
+end_of_support = "2023-10-10"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2012_r2"
+label = "Windows Server 2012 R2"
+end_of_support = "2023-10-10"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2016"
+label = "Windows Server 2016"
+end_of_support = "2027-01-12"
+note = "extended support end"
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2019"
+label = "Windows Server 2019"
+end_of_support = "2029-01-09"
+note = "extended support end"
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "windows_server_2022"
+label = "Windows Server 2022"
+end_of_support = "2031-10-14"
+note = "extended support end"
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "rhel_6"
+label = "RHEL 6"
+end_of_support = "2020-11-30"
+note = "end of maintenance; paid extended support exists"
+source = "Red Hat Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "rhel_7"
+label = "RHEL 7"
+end_of_support = "2024-06-30"
+note = "end of maintenance; paid extended support exists"
+source = "Red Hat Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "rhel_8"
+label = "RHEL 8"
+end_of_support = "2029-05-31"
+note = "end of maintenance"
+source = "Red Hat Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "rhel_9"
+label = "RHEL 9"
+end_of_support = "2032-05-31"
+note = "end of maintenance"
+source = "Red Hat Lifecycle"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "centos_7"
+label = "CentOS 7"
+end_of_support = "2024-06-30"
+note = ""
+source = "CentOS project"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "centos_8"
+label = "CentOS 8"
+end_of_support = "2021-12-31"
+note = ""
+source = "CentOS project"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "ubuntu_18_04"
+label = "Ubuntu 18.04 LTS"
+end_of_support = "2023-05-31"
+note = "standard support end"
+source = "Canonical"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "ubuntu_20_04"
+label = "Ubuntu 20.04 LTS"
+end_of_support = "2025-05-31"
+note = "standard support end"
+source = "Canonical"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "ubuntu_22_04"
+label = "Ubuntu 22.04 LTS"
+end_of_support = "2027-04-30"
+note = "standard support end"
+source = "Canonical"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "ubuntu_24_04"
+label = "Ubuntu 24.04 LTS"
+end_of_support = "2029-04-30"
+note = "standard support end"
+source = "Canonical"
+verified = false
+
+[[rule]]
+kind = "os"
+key = "sles_12"
+label = "SUSE Linux Enterprise 12"
+end_of_support = "2024-10-31"
+note = "general support end; long-term service pack support exists"
+source = "SUSE Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2008"
+label = "SQL Server 2008"
+end_of_support = "2019-07-09"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2012"
+label = "SQL Server 2012"
+end_of_support = "2022-07-12"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2014"
+label = "SQL Server 2014"
+end_of_support = "2024-07-09"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2016"
+label = "SQL Server 2016"
+end_of_support = "2026-07-14"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2017"
+label = "SQL Server 2017"
+end_of_support = "2027-10-12"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2019"
+label = "SQL Server 2019"
+end_of_support = "2030-01-08"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+
+[[rule]]
+kind = "sql"
+key = "2022"
+label = "SQL Server 2022"
+end_of_support = "2033-01-11"
+note = ""
+source = "Microsoft Lifecycle"
+verified = false
+

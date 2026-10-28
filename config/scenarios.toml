@@ -1,0 +1,28 @@
+# The four pricing scenarios named in SOW section 6.2 (A01).
+# purchase: on_demand | ri_1yr | ri_3yr          license: li | byol_where_eligible
+# ASSUMPTION (to confirm with Ingram): "BYOL" means on-demand purchase with the
+# customer's own Microsoft licenses wherever the licensing input says they are eligible.
+
+[[scenario]]
+id = "on_demand"
+label = "On-Demand"
+purchase = "on_demand"
+license = "li"
+
+[[scenario]]
+id = "ri_1yr"
+label = "1-year RI"
+purchase = "ri_1yr"
+license = "li"
+
+[[scenario]]
+id = "ri_3yr"
+label = "3-year RI"
+purchase = "ri_3yr"
+license = "li"
+
+[[scenario]]
+id = "byol"
+label = "BYOL"
+purchase = "on_demand"
+license = "byol_where_eligible"

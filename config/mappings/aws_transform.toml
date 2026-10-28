@@ -1,0 +1,14 @@
+# AWS Transform assessment results (data export spreadsheet).  UNVERIFIED LAYOUT: AWS documents that the
+# export is an XLSX with server-level recommendations and cost breakdowns ("fixed structure") but this project
+# has not yet seen a real one.  Adjust these aliases when the first real export is available.
+[sheets]
+servers = ["Server Recommendations", "Servers", "Compute", "Data Export", "Recommendations"]
+
+[servers]
+name = ["Server Name", "Hostname", "Server", "Name"]
+instance = ["Recommended Instance", "EC2 Instance Type", "Instance Type", "Recommended Instance Type"]
+annual_cost = ["Annual Cost", "Annual Cost (USD)", "Annual Compute Cost", "Annual On-Demand Cost"]
+monthly_cost = ["Monthly Cost", "Monthly Cost (USD)"]
+pricing_model = ["Pricing Model"]
+license = ["License Model", "Licensing"]
+required = ["name", "instance"]

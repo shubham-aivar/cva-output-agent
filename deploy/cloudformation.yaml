@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A01 CVA Output Processing Agent demo - CloudFront in front of one EC2 instance (no NAT gateway, no load balancer)
+
+Parameters:
+  CodeBucket:        {Type: String, Description: "S3 bucket holding the code zip"}
+  CodeKey:           {Type: String, Default: code/cva-latest.zip}
+  SecretName:        {Type: String, Default: cva/a01/auth, Description: "Secrets Manager secret with username, password hash, session key, origin secret"}
+  OriginSecret:      {Type: String, NoEcho: true, MinLength: 32, Description: "Same value as origin_secret in the secret. CloudFront sends it, A01 requires it"}
+  CloudFrontPrefixListId: {Type: String, Description: "Managed prefix list com.amazonaws.global.cloudfront.origin-facing"}
+  InstanceType:      {Type: String, Default: t3.medium}
+  UbuntuAmi:         {Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>", Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}
+  ExtraPolicyArn:    {Type: String, Default: "", Description: "Optional managed policy for the instance role."}
+  VpcId:             {Type: AWS::EC2::VPC::Id, Description: "Existing VPC to deploy into (use the default VPC)"}
+  SubnetId:          {Type: AWS::EC2::Subnet::Id, Description: "Public subnet in the VPC above"}
+
+Conditions:
+  HasExtraPolicy: !Not [!Equals [!Ref ExtraPolicyArn, ""]]
+
+Resources:
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: A01 on 8080 reachable only from CloudFront origin-facing addresses
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 8080, ToPort: 8080, SourcePrefixListId: !Ref CloudFrontPrefixListId, Description: CloudFront origin-facing}
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{Effect: Allow, Principal: {Service: ec2.amazonaws.com}, Action: "sts:AssumeRole"}]
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !If [HasExtraPolicy, !Ref ExtraPolicyArn, !Ref "AWS::NoValue"]
+      Policies:
+        - PolicyName: cva-a01
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - {Sid: Code, Effect: Allow, Action: "s3:GetObject", Resource: !Sub "arn:${AWS::Partition}:s3:::${CodeBucket}/${CodeKey}"}
+              - {Sid: Login, Effect: Allow, Action: "secretsmanager:GetSecretValue", Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretName}-*"}
+              # AWS Transform (IAM prefixes "transform" and "transform-custom"). Whether these two are enough for the MCP server's SigV4 calls
+              # could not be verified from here: the app's pre-flight shows AccessDenied if not (then redeploy with EXTRA_POLICY_ARN).
+              - {Sid: Transform, Effect: Allow, Action: ["transform:*", "transform-custom:*"], Resource: "*"}
+  InstanceProfile: {Type: AWS::IAM::InstanceProfile, Properties: {Roles: [!Ref InstanceRole]}}
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref UbuntuAmi
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      MetadataOptions: {HttpTokens: required, HttpEndpoint: enabled, HttpPutResponseHopLimit: 2}
+      BlockDeviceMappings: [{DeviceName: /dev/sda1, Ebs: {VolumeSize: 40, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true}}]
+      NetworkInterfaces:
+        - {DeviceIndex: "0", SubnetId: !Ref SubnetId, GroupSet: [!Ref AppSecurityGroup], AssociatePublicIpAddress: true}
+      Tags: [{Key: Name, Value: cva-a01-demo-02}]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          exec > >(tee -a /var/log/cva-userdata.log) 2>&1
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get install -y unzip curl
+          if ! command -v aws >/dev/null; then
+            curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscli.zip
+            unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install
+          fi
+          export AWS_DEFAULT_REGION=${AWS::Region}
+          mkdir -p /opt/cva/app
+          aws s3 cp "s3://${CodeBucket}/${CodeKey}" /tmp/cva.zip
+          unzip -q -o /tmp/cva.zip -d /opt/cva/app
+          REGION=${AWS::Region} SECRET_ID=${SecretName} CODE_URI="s3://${CodeBucket}/${CodeKey}" bash /opt/cva/app/deploy/bootstrap.sh
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: A01 CVA Output Processing Agent demo
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: ec2
+            DomainName: !GetAtt Instance.PublicDnsName
+            CustomOriginConfig: {HTTPPort: 8080, OriginProtocolPolicy: http-only, OriginReadTimeout: 60, OriginKeepaliveTimeout: 5}
+            OriginCustomHeaders: [{HeaderName: X-Origin-Verify, HeaderValue: !Ref OriginSecret}]
+        DefaultCacheBehavior:
+          TargetOriginId: ec2
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+          CachedMethods: [GET, HEAD]
+          Compress: false
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad            # Managed-CachingDisabled
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac    # Managed-AllViewerExceptHostHeader (cookies and X-Forwarded-For pass through)
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03  # Managed-SecurityHeadersPolicy (HSTS and friends)
+
+Outputs:
+  Url:        {Value: !Sub "https://${Distribution.DomainName}"}
+  InstanceId: {Value: !Ref Instance}
+  Distribution: {Value: !Ref Distribution}

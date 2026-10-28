@@ -1,0 +1,61 @@
+
+# Python
+
+.venv/
+
+venv/
+
+__pycache__/
+
+*.py[cod]
+
+*.egg-info/
+
+build/
+
+dist/
+
+.pytest_cache/
+
+.ruff_cache/
+
+.mypy_cache/
+
+.coverage
+
+htmlcov/
+ 
+# App runtime data
+
+runs/
+ 
+# Secrets / env
+
+.env
+
+.env.*
+
+*.pem
+
+*.key
+
+credentials*
+
+*.secret
+ 
+# Deploy artifacts
+
+*.zip
+ 
+# OS / IDE
+
+.DS_Store
+
+.idea/
+
+.vscode/
+
+*.swp
+
+samples/
+

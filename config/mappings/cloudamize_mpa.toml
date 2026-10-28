@@ -1,0 +1,28 @@
+# Cloudamize "Migration Portfolio Assessment (MPA) Export".  UNVERIFIED LAYOUT: Cloudamize documents only the
+# tab names (Servers, Applications, Databases, Server to application, Application dependency, Server
+# communication), not the column names, and no sample has been seen.  The aliases below are the AWS MPA import
+# template's likely names; adjust this file (or accept an agent mapping proposal) when a real export arrives.
+[sheets]
+servers = ["Servers"]
+databases = ["Databases"]
+
+[servers]
+name = ["Server Name", "Hostname", "Name"]
+os = ["Operating System", "OS", "OS Name"]
+vcpu = ["Number of Cores", "Cores", "vCPU", "CPU Cores", "Number of CPUs"]
+ram_gb = ["Memory (GB)", "RAM (GB)", "Memory GB", "Total RAM (GB)"]
+storage_used_gb = ["Storage Used (GB)", "Used Storage (GB)", "Storage In Use (GB)"]
+cpu_avg = ["CPU Utilization Avg", "Avg CPU Utilization (%)", "CPU Avg (%)"]
+cpu_peak = ["CPU Utilization Peak", "Max CPU Utilization (%)", "CPU Peak (%)"]
+ram_avg = ["Memory Utilization Avg", "Avg Memory Utilization (%)"]
+ram_peak = ["Memory Utilization Peak", "Max Memory Utilization (%)"]
+env = ["Environment"]
+id = ["Server Id", "Server ID"]
+required = ["name", "os"]
+
+[databases]
+name = ["Server Name", "Hostname"]
+sql_edition = ["Edition", "Database Edition"]
+sql_version = ["Version", "Database Version"]
+sql_instance = ["Database Name", "Instance Name"]
+required = ["name"]

@@ -1,0 +1,67 @@
+# AWS Transform integration settings.  Everything the driver sends or checks lives here.
+[assessment]
+agent = "migration-assessment-agent-v2"       # seen in your account's job-type list
+poll_seconds = 20
+max_wait_seconds = 2400
+poke_seconds = 45                             # the service posts "I have an update for you. Please send a message (e.g., 'status')" and waits: nudge it this often
+max_pokes = 4                                  # per message from the service; max_total_pokes caps the whole wait
+max_total_pokes = 40
+awaiting_after_confirm_seconds = 45          # still 'awaiting input' this long after the scenario was confirmed: say so
+status_timeout_seconds = 90                    # the status snapshot fans out to several backend calls: given longer than a file listing
+messages_timeout_seconds = 120                 # so is the message listing
+login_check_seconds = 300                      # check (and so refresh) the AWS login with the AWS CLI this often while waiting
+restart_after_timeouts = 2                    # the server did not answer this many calls in a row: start a fresh one
+max_restarts = 6                               # at most this many fresh starts in one run, then a person is told
+max_reasks = 3                                 # the job still waits for the scenario decision after our go-ahead: ask again this many times
+max_failed_checks = 6                          # status and listings both failing on this many checks in a row: stop and say why (the job keeps running in AWS)
+list_timeout_seconds = 45                      # one hung file listing is cut off after this, instead of freezing a check for 4 minutes
+listing_budget_seconds = 75                    # one crawl of the job's files stops after this and continues on the next check
+outputs_grace_seconds = 60                    # the numbers file is there: wait this long for error_file.csv and the zip
+reports_without_json_seconds = 90             # the reports are visible but aggregated_output.json is not: say so
+readback_seconds = 240                        # how long to wait for the service to list its configuration back
+stall_seconds = 300                           # job awaiting a human but no recognisable proposal for this long: stop and ask a person
+upload_types = { ".xlsx" = "XLSX", ".csv" = "CSV", ".json" = "JSON", ".zip" = "ZIP" }
+
+[settings]                                    # sent in full every time: a re-run does NOT keep earlier settings
+region = "us-east-1"
+pricing = "On-Demand with 1-year and 3-year Reserved Instance (No Upfront) pricing shown side by side"
+tenancy = "Shared"
+instance_selection = "Cost optimized"
+licensing = "License Included for Windows and RHEL; SQL Server License Included where databases are present"
+extra = "Do not enable sustainability. Change no other setting."
+
+[expected]                                    # every item must appear (as a regex, case-insensitive) in the configuration the service lists back
+must_contain = [
+  { pattern = "us-east-1", label = "Region us-east-1" },
+  { pattern = "on[- ]?demand", label = "On-Demand pricing" },
+  { pattern = "(1|one)[- ]?year", label = "1-year pricing" },
+  { pattern = "(3|three)[- ]?year", label = "3-year pricing" },
+  { pattern = "no[- ]?upfront", label = "No Upfront" },
+  { pattern = "shared", label = "Shared tenancy" },
+  { pattern = "cost[- ]?optimi[sz]ed", label = "Cost optimized instance selection" },
+  { pattern = "license[- ]?included", label = "License Included" },
+]
+forbidden = [
+  { pattern = 'sustainability[^.\n]{0,40}\benabled\b', label = "Sustainability is enabled (we asked for it to stay off)" },
+  { pattern = 'savings plans?', label = "Savings Plans appear (we asked for On-Demand and Reserved Instances)" },
+]
+# seen in the service's own defaults and not blocking: reported to the reviewer
+accepted_defaults = [
+  { pattern = 'older instance famil|t2, m4, c4, r4, i3, a1', label = "older instance families (t2, m4, c4, r4, i3, a1) excluded by the service's own default" },
+  { pattern = 'network cost', label = "network cost set by the service's default" },
+]
+
+[messages]
+proceed = "Proceed with defaults: use the default utilization assumptions (25% CPU, 60% memory) and exactly the configuration you just listed. Build the scenario and the migration business case."
+proceed_as_is = "Proceed with the current inventory and the defaults you noted. Then present the complete scenario configuration, with every setting, for my review. Do not run anything until I confirm."
+proceed_custom = "Proceed with exactly the configuration you just listed, including the values we agreed in this chat. Build the scenario and the migration business case."
+proceed_enriched = "Proceed with the configuration you just listed and the enrichment data I applied. Build the scenario and the migration business case."
+config_request = "Before I confirm anything, list the exact scenario configuration you will run, one setting per line: target region; pricing models; payment option; tenancy; instance selection; licensing for Windows, RHEL and SQL Server; utilization assumptions (CPU and memory); sustainability; any excluded instance families; network cost. Do not proceed or run anything yet."
+# Wording from the service VARIES from run to run (an AI assistant), so these only help; the job state and the read-back above do the real work.
+waiting_patterns = ["awaiting your", "waiting for your", "what would you like to do", "your options", "proceed with defaults", "how would you like to proceed", "ready for review", "ready to execute", "ready to proceed"]
+rerun = "Re-run the existing Initial Assessment with the same configuration. Do not create a new scenario."
+enrichment_request = "Generate the per-server enrichment template CSV (server_enrichment.csv) for download."
+enrichment_apply = "Apply this enrichment data."
+status_request = "status"                     # read-only nudge, the wording the service itself suggests
+notification_patterns = ["i have an update for you", "please send a message", "send a message \\(e\\.g\\."]
+confirm_patterns = ["ready to proceed", "would you like me to proceed", "please confirm", "confirm the scenario"]

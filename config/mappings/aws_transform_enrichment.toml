@@ -1,0 +1,28 @@
+# How our normalised workload fields fill AWS Transform's enrichment template (server_enrichment.csv, verified
+# against the template your account generated: key "id", 55 columns).  Only columns we have REAL measurements for
+# are written; with policy.blank_unknown the template's pre-filled 25% CPU / 60% memory defaults are blanked for
+# those servers so the service reports missing data instead of treating a default as a measurement.
+[columns.average_cpu_utilization_percentage]
+field = "cpu_avg"
+[columns.peak_cpu_utilization_percentage]
+field = "cpu_peak"
+[columns.average_memory_utilization_percentage]
+field = "ram_avg"
+[columns.peak_memory_utilization_percentage]
+field = "ram_peak"
+[columns.sql_server_edition]
+field = "sql_edition"
+[columns.sql_server_version]
+field = "sql_year"
+[columns.environment]
+field = "env"
+map = { prod = "Production", production = "Production", dev = "Dev", test = "Test", stage = "Test", qa = "Test", uat = "Test" }
+
+[policy]
+blank_unknown = true          # untested: blanks are assumed accepted; set false to keep the template defaults
+snapshot_as_average_only = true   # a single point-in-time reading is sent as an average, never as peak or p95
+skip_powered_off = true
+
+# p95 CPU is the service's key CPU field.  None of our sources supplies a true p95, so it is blanked (never defaulted).
+[columns.p95_cpu_utilization_percentage]
+field = "cpu_p95"

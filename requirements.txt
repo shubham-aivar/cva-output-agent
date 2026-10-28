@@ -1,0 +1,5 @@
+openpyxl>=3.1
+python-pptx>=1.0
+# optional, only for the real model: boto3>=1.34
+# dev: pytest>=8, ruff>=0.5
+mcp>=1.23,<2        # AWS Transform MCP client (A01 stays on 1.x; the AWS Transform server 0.2.3 itself needs mcp 2.x, so on a host it lives in its own virtual environment: see deploy/bootstrap.sh)

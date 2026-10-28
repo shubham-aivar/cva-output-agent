@@ -1,0 +1,493 @@
+# PLACEHOLDER PRICE CATALOG: NOT the AWS Price List.
+# Linux on-demand hourly prices are Aivar engineering estimates for us-east-1 (from memory) and
+# must be replaced by an AWS Price List snapshot before any customer-facing use.
+# Where "windows_hr" is present it was OBSERVED in Cloudamize's public sample export
+# (Compute sheet, Annual Total Cost / 8760, Windows, on-demand, us-east-1).
+# SQL Server license-included add-ons are Aivar estimates from memory.  Reserved-instance and
+# dedicated-host multipliers are generic planning ratios, not quotes.
+
+[meta]
+source = "PLACEHOLDER (Aivar estimates + Cloudamize public sample observations)"
+version = "0.1-placeholder"
+region = "us-east-1"
+placeholder = true
+
+[license]
+windows_per_vcpu_hr = 0.046            # non-burstable instances; matches observed m7i/r7i/r7a rows
+windows_per_vcpu_hr_burstable = 0.0184 # fallback for t-family sizes without an observed price
+sql_standard_per_vcpu_hr = 0.1065
+sql_enterprise_per_vcpu_hr = 0.349
+sql_web_per_vcpu_hr = 0.0
+sql_developer_per_vcpu_hr = 0.0
+sql_express_per_vcpu_hr = 0.0
+
+[multipliers]
+ri_1yr_infra = 0.62                    # applied to the infrastructure part only; license part is not discounted
+ri_3yr_infra = 0.40
+dedicated_host_infra = 1.30            # surcharge on infrastructure when a BYOL finding requires dedicated tenancy
+
+[storage]
+gp3_gb_month = 0.08
+
+[[instance]]
+name = "t3a.micro"
+family = "t3a"
+vcpu = 2
+mem_gb = 1
+linux_hr = 0.0094
+burstable = true
+
+[[instance]]
+name = "t3a.small"
+family = "t3a"
+vcpu = 2
+mem_gb = 2
+linux_hr = 0.0188
+burstable = true
+windows_hr = 0.0372
+
+[[instance]]
+name = "t3a.medium"
+family = "t3a"
+vcpu = 2
+mem_gb = 4
+linux_hr = 0.0376
+burstable = true
+windows_hr = 0.056
+
+[[instance]]
+name = "t3a.large"
+family = "t3a"
+vcpu = 2
+mem_gb = 8
+linux_hr = 0.0752
+burstable = true
+windows_hr = 0.1028
+
+[[instance]]
+name = "t3a.xlarge"
+family = "t3a"
+vcpu = 4
+mem_gb = 16
+linux_hr = 0.1504
+burstable = true
+windows_hr = 0.224
+
+[[instance]]
+name = "t3a.2xlarge"
+family = "t3a"
+vcpu = 8
+mem_gb = 32
+linux_hr = 0.3008
+burstable = true
+windows_hr = 0.448
+
+[[instance]]
+name = "t3.medium"
+family = "t3"
+vcpu = 2
+mem_gb = 4
+linux_hr = 0.0416
+burstable = true
+windows_hr = 0.06
+
+[[instance]]
+name = "t3.large"
+family = "t3"
+vcpu = 2
+mem_gb = 8
+linux_hr = 0.0832
+burstable = true
+
+[[instance]]
+name = "t3.xlarge"
+family = "t3"
+vcpu = 4
+mem_gb = 16
+linux_hr = 0.1664
+burstable = true
+
+[[instance]]
+name = "t3.2xlarge"
+family = "t3"
+vcpu = 8
+mem_gb = 32
+linux_hr = 0.3328
+burstable = true
+
+[[instance]]
+name = "m6i.large"
+family = "m6i"
+vcpu = 2
+mem_gb = 8
+linux_hr = 0.096
+burstable = false
+
+[[instance]]
+name = "m6i.xlarge"
+family = "m6i"
+vcpu = 4
+mem_gb = 16
+linux_hr = 0.192
+burstable = false
+
+[[instance]]
+name = "m6i.2xlarge"
+family = "m6i"
+vcpu = 8
+mem_gb = 32
+linux_hr = 0.384
+burstable = false
+
+[[instance]]
+name = "m6i.4xlarge"
+family = "m6i"
+vcpu = 16
+mem_gb = 64
+linux_hr = 0.768
+burstable = false
+
+[[instance]]
+name = "m6i.8xlarge"
+family = "m6i"
+vcpu = 32
+mem_gb = 128
+linux_hr = 1.536
+burstable = false
+
+[[instance]]
+name = "m6i.12xlarge"
+family = "m6i"
+vcpu = 48
+mem_gb = 192
+linux_hr = 2.304
+burstable = false
+
+[[instance]]
+name = "m6i.16xlarge"
+family = "m6i"
+vcpu = 64
+mem_gb = 256
+linux_hr = 3.072
+burstable = false
+
+[[instance]]
+name = "m7i.large"
+family = "m7i"
+vcpu = 2
+mem_gb = 8
+linux_hr = 0.1008
+burstable = false
+
+[[instance]]
+name = "m7i.xlarge"
+family = "m7i"
+vcpu = 4
+mem_gb = 16
+linux_hr = 0.2016
+burstable = false
+
+[[instance]]
+name = "m7i.2xlarge"
+family = "m7i"
+vcpu = 8
+mem_gb = 32
+linux_hr = 0.4032
+burstable = false
+
+[[instance]]
+name = "m7i.4xlarge"
+family = "m7i"
+vcpu = 16
+mem_gb = 64
+linux_hr = 0.8064
+burstable = false
+
+[[instance]]
+name = "m7i.8xlarge"
+family = "m7i"
+vcpu = 32
+mem_gb = 128
+linux_hr = 1.6128
+burstable = false
+
+[[instance]]
+name = "m7i-flex.large"
+family = "m7i-flex"
+vcpu = 2
+mem_gb = 8
+linux_hr = 0.0958
+burstable = false
+
+[[instance]]
+name = "m7i-flex.xlarge"
+family = "m7i-flex"
+vcpu = 4
+mem_gb = 16
+linux_hr = 0.1915
+burstable = false
+
+[[instance]]
+name = "m7a.medium"
+family = "m7a"
+vcpu = 1
+mem_gb = 4
+linux_hr = 0.058
+burstable = false
+
+[[instance]]
+name = "m7a.large"
+family = "m7a"
+vcpu = 2
+mem_gb = 8
+linux_hr = 0.1159
+burstable = false
+
+[[instance]]
+name = "m7a.xlarge"
+family = "m7a"
+vcpu = 4
+mem_gb = 16
+linux_hr = 0.2318
+burstable = false
+
+[[instance]]
+name = "m7a.2xlarge"
+family = "m7a"
+vcpu = 8
+mem_gb = 32
+linux_hr = 0.4637
+burstable = false
+
+[[instance]]
+name = "c6i.large"
+family = "c6i"
+vcpu = 2
+mem_gb = 4
+linux_hr = 0.085
+burstable = false
+
+[[instance]]
+name = "c6i.xlarge"
+family = "c6i"
+vcpu = 4
+mem_gb = 8
+linux_hr = 0.17
+burstable = false
+
+[[instance]]
+name = "c6i.2xlarge"
+family = "c6i"
+vcpu = 8
+mem_gb = 16
+linux_hr = 0.34
+burstable = false
+
+[[instance]]
+name = "c6i.4xlarge"
+family = "c6i"
+vcpu = 16
+mem_gb = 32
+linux_hr = 0.68
+burstable = false
+
+[[instance]]
+name = "c7a.medium"
+family = "c7a"
+vcpu = 1
+mem_gb = 2
+linux_hr = 0.0513
+burstable = false
+
+[[instance]]
+name = "c7a.large"
+family = "c7a"
+vcpu = 2
+mem_gb = 4
+linux_hr = 0.1026
+burstable = false
+
+[[instance]]
+name = "c7a.xlarge"
+family = "c7a"
+vcpu = 4
+mem_gb = 8
+linux_hr = 0.2052
+burstable = false
+
+[[instance]]
+name = "c7i.large"
+family = "c7i"
+vcpu = 2
+mem_gb = 4
+linux_hr = 0.0893
+burstable = false
+
+[[instance]]
+name = "c7i.xlarge"
+family = "c7i"
+vcpu = 4
+mem_gb = 8
+linux_hr = 0.1785
+burstable = false
+
+[[instance]]
+name = "c7i.2xlarge"
+family = "c7i"
+vcpu = 8
+mem_gb = 16
+linux_hr = 0.357
+burstable = false
+
+[[instance]]
+name = "r6i.large"
+family = "r6i"
+vcpu = 2
+mem_gb = 16
+linux_hr = 0.126
+burstable = false
+
+[[instance]]
+name = "r6i.xlarge"
+family = "r6i"
+vcpu = 4
+mem_gb = 32
+linux_hr = 0.252
+burstable = false
+
+[[instance]]
+name = "r6i.2xlarge"
+family = "r6i"
+vcpu = 8
+mem_gb = 64
+linux_hr = 0.504
+burstable = false
+
+[[instance]]
+name = "r6i.4xlarge"
+family = "r6i"
+vcpu = 16
+mem_gb = 128
+linux_hr = 1.008
+burstable = false
+
+[[instance]]
+name = "r6i.8xlarge"
+family = "r6i"
+vcpu = 32
+mem_gb = 256
+linux_hr = 2.016
+burstable = false
+
+[[instance]]
+name = "r6i.12xlarge"
+family = "r6i"
+vcpu = 48
+mem_gb = 384
+linux_hr = 3.024
+burstable = false
+
+[[instance]]
+name = "r6i.16xlarge"
+family = "r6i"
+vcpu = 64
+mem_gb = 512
+linux_hr = 4.032
+burstable = false
+
+[[instance]]
+name = "r7i.large"
+family = "r7i"
+vcpu = 2
+mem_gb = 16
+linux_hr = 0.1323
+burstable = false
+
+[[instance]]
+name = "r7i.xlarge"
+family = "r7i"
+vcpu = 4
+mem_gb = 32
+linux_hr = 0.2646
+burstable = false
+
+[[instance]]
+name = "r7i.2xlarge"
+family = "r7i"
+vcpu = 8
+mem_gb = 64
+linux_hr = 0.5292
+burstable = false
+
+[[instance]]
+name = "r7i.4xlarge"
+family = "r7i"
+vcpu = 16
+mem_gb = 128
+linux_hr = 1.0584
+burstable = false
+
+[[instance]]
+name = "r7i.8xlarge"
+family = "r7i"
+vcpu = 32
+mem_gb = 256
+linux_hr = 2.1168
+burstable = false
+
+[[instance]]
+name = "r7a.medium"
+family = "r7a"
+vcpu = 1
+mem_gb = 8
+linux_hr = 0.0759
+burstable = false
+
+[[instance]]
+name = "r7a.large"
+family = "r7a"
+vcpu = 2
+mem_gb = 16
+linux_hr = 0.1518
+burstable = false
+
+[[instance]]
+name = "r7a.xlarge"
+family = "r7a"
+vcpu = 4
+mem_gb = 32
+linux_hr = 0.3036
+burstable = false
+
+[[instance]]
+name = "r7a.2xlarge"
+family = "r7a"
+vcpu = 8
+mem_gb = 64
+linux_hr = 0.6072
+burstable = false
+
+[[instance]]
+name = "r7iz.2xlarge"
+family = "r7iz"
+vcpu = 8
+mem_gb = 64
+linux_hr = 0.744
+burstable = false
+
+[[instance]]
+name = "r7iz.4xlarge"
+family = "r7iz"
+vcpu = 16
+mem_gb = 128
+linux_hr = 1.488
+burstable = false
+
+[[instance]]
+name = "r5b.xlarge"
+family = "r5b"
+vcpu = 4
+mem_gb = 32
+linux_hr = 0.298
+burstable = false
+

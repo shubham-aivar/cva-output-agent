@@ -1,0 +1,1269 @@
+{
+ "assessment_types": [
+  "storage/ebs",
+  "on-prem",
+  "compute/ec2"
+ ],
+ "scope": {
+  "assessment_count": 3,
+  "resources_analyzed": [
+   {
+    "assessment_types": [
+     "compute/ec2"
+    ],
+    "assessment_category": "Compute",
+    "description": "55 servers"
+   },
+   {
+    "assessment_types": [
+     "storage/ebs"
+    ],
+    "assessment_category": "Storage",
+    "description": "98 volumes"
+   },
+   {
+    "assessment_types": [
+     "on-prem"
+    ],
+    "assessment_category": "On-Premises",
+    "description": "55 Virtual Servers, 98 Server Volumes"
+   }
+  ],
+  "capacity_analyzed": [
+   {
+    "assessment_types": [
+     "compute/ec2"
+    ],
+    "assessment_category": "Compute",
+    "description": "286 vCPUs, 1,196.0 GB memory"
+   },
+   {
+    "assessment_types": [
+     "storage/ebs"
+    ],
+    "assessment_category": "Storage",
+    "description": "12.14 TiB"
+   },
+   {
+    "assessment_types": [
+     "on-prem"
+    ],
+    "assessment_category": "On-Premises",
+    "description": "23.34 TiB storage"
+   }
+  ],
+  "entities": {
+   "servers": {
+    "total": 57,
+    "in_scope": {
+     "total": 55,
+     "mapped": 55
+    },
+    "excluded": {
+     "total": 2,
+     "reasons": [
+      "2 \u2014 Exclude Powered Off and Suspended Servers"
+     ],
+     "capacity": []
+    },
+    "details": {
+     "windows": 29,
+     "linux": 26
+    }
+   },
+   "applications": {
+    "total": 0,
+    "in_scope": {
+     "total": 0,
+     "mapped": 0
+    },
+    "excluded": {
+     "total": 0,
+     "reasons": [],
+     "capacity": []
+    }
+   },
+   "storage_volumes": {
+    "total": 101,
+    "in_scope": {
+     "total": 98,
+     "mapped": 98
+    },
+    "excluded": {
+     "total": 3,
+     "reasons": [
+      "3 \u2014 attached to excluded servers"
+     ],
+     "capacity": []
+    },
+    "details": {
+     "capacity_tib": {
+      "block_provisioned": 23.33984375,
+      "block_used": 12.13724609375,
+      "nas": 0.0,
+      "object": 0.0,
+      "server_storage": 0.0
+     }
+    }
+   },
+   "sql_servers": {
+    "total": 0,
+    "in_scope": {
+     "total": 0,
+     "mapped": 0
+    },
+    "excluded": {
+     "total": 0,
+     "reasons": [],
+     "capacity": []
+    },
+    "details": {
+     "database_instances": 0,
+     "editions": {
+      "enterprise": 0,
+      "standard": 0,
+      "other": 0
+     }
+    }
+   },
+   "desktops": {
+    "total": 0,
+    "in_scope": {
+     "total": 0,
+     "mapped": 0
+    },
+    "excluded": {
+     "total": 0,
+     "reasons": [],
+     "capacity": []
+    }
+   }
+  }
+ },
+ "financial_overview": {
+  "total_aws_cost": 62898.0,
+  "total_on_prem_cost": 158181.0,
+  "by_assessment": {
+   "storage/ebs": {
+    "annual_cost": 5864.16,
+    "cost_breakdown": [
+     {
+      "cost_category": "storage",
+      "annual_cost": 898.32,
+      "cost_description": "gp3 volumes (cost_optimized)"
+     },
+     {
+      "cost_category": "storage",
+      "annual_cost": 4965.84,
+      "cost_description": "sc1 volumes (cost_optimized)"
+     }
+    ],
+    "total_cash_flows": [
+     5864.16,
+     5864.16,
+     5864.16,
+     5864.16,
+     5864.16
+    ],
+    "cash_flows_by_category": [
+     {
+      "category": "storage",
+      "values": [
+       898.32,
+       898.32,
+       898.32,
+       898.32,
+       898.32
+      ]
+     },
+     {
+      "category": "storage",
+      "values": [
+       4965.84,
+       4965.84,
+       4965.84,
+       4965.84,
+       4965.84
+      ]
+     }
+    ]
+   },
+   "on-prem": {
+    "annual_cost": 158981.10844,
+    "cost_breakdown": [
+     {
+      "cost_category": "compute",
+      "annual_cost": 109905.74444000001,
+      "cost_description": "On Prem Compute Cost"
+     },
+     {
+      "cost_category": "storage",
+      "annual_cost": 43158.8,
+      "cost_description": "On Prem Storage Cost"
+     },
+     {
+      "cost_category": "network",
+      "annual_cost": 5916.563999999999,
+      "cost_description": "On Prem Network Cost"
+     }
+    ],
+    "total_cash_flows": [
+     477006.09644000005,
+     79474.86144,
+     79474.86144,
+     79474.86144,
+     79474.86144
+    ],
+    "cash_flows_by_category": [
+     {
+      "category": "compute",
+      "values": [
+       379177.19644,
+       42587.88144,
+       42587.88144,
+       42587.88144,
+       42587.88144
+      ]
+     },
+     {
+      "category": "storage",
+      "values": [
+       81394.0,
+       33600.0,
+       33600.0,
+       33600.0,
+       33600.0
+      ]
+     },
+     {
+      "category": "network",
+      "values": [
+       16434.899999999998,
+       3286.9799999999996,
+       3286.9799999999996,
+       3286.9799999999996,
+       3286.9799999999996
+      ]
+     }
+    ]
+   },
+   "compute/ec2": {
+    "annual_cost": 55016.84,
+    "cost_breakdown": [
+     {
+      "cost_category": "compute",
+      "annual_cost": 50049.46,
+      "cost_description": "EC2 instance costs (3-Year Reserved Instances)"
+     },
+     {
+      "cost_category": "network",
+      "annual_cost": 4967.38,
+      "cost_description": "Data transfer costs (10.0% of the 1-Year NURI cost for the instance selected under 1-Year pricing)"
+     }
+    ],
+    "total_cash_flows": [
+     55016.84,
+     55016.84,
+     55016.84,
+     55016.84,
+     55016.84
+    ],
+    "cash_flows_by_category": [
+     {
+      "category": "compute",
+      "values": [
+       50049.46,
+       50049.46,
+       50049.46,
+       50049.46,
+       50049.46
+      ]
+     },
+     {
+      "category": "network",
+      "values": [
+       4967.38,
+       4967.38,
+       4967.38,
+       4967.38,
+       4967.38
+      ]
+     }
+    ]
+   },
+   "cloud_economics": {
+    "annual_cost": 6088.1,
+    "cost_breakdown": [
+     {
+      "cost_category": "support",
+      "annual_cost": 6088.1,
+      "cost_description": "AWS Business Support"
+     }
+    ],
+    "total_cash_flows": [
+     6088.1,
+     6088.1,
+     6088.1,
+     6088.1,
+     6088.1
+    ],
+    "cash_flows_by_category": [
+     {
+      "category": "support",
+      "values": [
+       6088.1,
+       6088.1,
+       6088.1,
+       6088.1,
+       6088.1
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pricing_comparison": {
+  "total_on_prem_cost": 158181.0,
+  "on_prem_by_category": {
+   "compute": 109905.74444000001,
+   "storage": 43158.8,
+   "network": 5916.563999999999
+  },
+  "models": [
+   {
+    "pricing_model": "On-Demand",
+    "pricing_model_short": "On Demand",
+    "pricing_model_slug": "on_demand",
+    "is_recommended": false,
+    "total_aws_cost": 113026.0,
+    "by_category": {
+     "compute": 93671.0,
+     "storage": 4499.0,
+     "network": 4582.0,
+     "support": 10275.0
+    },
+    "by_category_by_assessment": {
+     "compute": {
+      "compute/ec2": 100385.3
+     },
+     "storage": {
+      "storage/ebs": 5864.16
+     },
+     "network": {
+      "compute/ec2": 4967.38
+     },
+     "support": {
+      "cloud_economics": 11121.684000000003
+     }
+    }
+   },
+   {
+    "pricing_model": "1-Year Reserved Instances (No Upfront)",
+    "pricing_model_short": "1 Year No Upfront",
+    "pricing_model_slug": "one_year_nuri",
+    "is_recommended": false,
+    "total_aws_cost": 82908.0,
+    "by_category": {
+     "compute": 66291.0,
+     "storage": 4499.0,
+     "network": 4582.0,
+     "support": 7537.0
+    },
+    "by_category_by_assessment": {
+     "compute": {
+      "compute/ec2": 70404.88
+     },
+     "storage": {
+      "storage/ebs": 5864.16
+     },
+     "network": {
+      "compute/ec2": 4967.38
+     },
+     "support": {
+      "cloud_economics": 8123.642000000003
+     }
+    }
+   },
+   {
+    "pricing_model": "3-Year Reserved Instances (No Upfront)",
+    "pricing_model_short": "3 Year No Upfront",
+    "pricing_model_slug": "three_year_nuri",
+    "is_recommended": true,
+    "total_aws_cost": 62898.0,
+    "by_category": {
+     "compute": 48099.0,
+     "storage": 4499.0,
+     "network": 4582.0,
+     "support": 5718.0
+    },
+    "by_category_by_assessment": {
+     "compute": {
+      "compute/ec2": 50049.46
+     },
+     "storage": {
+      "storage/ebs": 5864.16
+     },
+     "network": {
+      "compute/ec2": 4967.38
+     },
+     "support": {
+      "cloud_economics": 6088.1
+     }
+    }
+   }
+  ]
+ },
+ "assessments": [
+  {
+   "metadata": {
+    "assessment_type": "storage/ebs",
+    "workload_types": [],
+    "region": "us-east-1"
+   },
+   "overview": {
+    "resources_analyzed": "98 volumes",
+    "capacity_analyzed": "12.14 TiB",
+    "recommended_annual_cost": 5864.16,
+    "key_findings": [
+     "Analyzed 98 storage volumes for EBS migration",
+     "Successfully mapped 98 volumes to EBS volume types",
+     "Recommended strategy: Cost-Optimized Strategy",
+     "98 idle volume(s) with zero IOPS/throughput mapped to lowest-cost EBS types"
+    ],
+    "assessment_breakdown": [
+     {
+      "name": "Cost-Optimized Strategy",
+      "description": "Maps each volume to the cheapest EBS type (gp3/io2/sc1/st1).",
+      "is_recommended": true,
+      "annual_cost": 5864.16,
+      "cost_breakdown": [
+       {
+        "cost_category": "storage",
+        "annual_cost": 898.32,
+        "cost_description": "gp3 volumes (cost_optimized)"
+       },
+       {
+        "cost_category": "storage",
+        "annual_cost": 4965.84,
+        "cost_description": "sc1 volumes (cost_optimized)"
+       }
+      ]
+     },
+     {
+      "name": "1-to-Many Strategy",
+      "description": "Splits one source into up to 6 GP3s; HDD for cold.",
+      "is_recommended": false,
+      "annual_cost": 5864.16,
+      "cost_breakdown": [
+       {
+        "cost_category": "storage",
+        "annual_cost": 898.32,
+        "cost_description": "gp3 volumes (one_to_many)"
+       },
+       {
+        "cost_category": "storage",
+        "annual_cost": 4965.84,
+        "cost_description": "sc1 volumes (one_to_many)"
+       }
+      ]
+     }
+    ],
+    "resources_excluded": [],
+    "capacity_excluded": [],
+    "fallback_warnings": null
+   },
+   "recommendations": [
+    {
+     "category": "cost",
+     "priority": "high",
+     "effort": "medium",
+     "title": "Implement Cost-Optimized Strategy",
+     "description": "Deploy storage using Cost-Optimized Strategy for an estimated $5,864.16/year.",
+     "estimated_impact": "Optimized annual storage cost based on workload characteristics"
+    },
+    {
+     "category": "cost",
+     "priority": "medium",
+     "effort": "low",
+     "title": "Review Idle Storage Volumes",
+     "description": "98 volumes with zero IOPS/throughput mapped to lowest-cost EBS types.",
+     "estimated_impact": "Validate monitoring data or decommission unused volumes"
+    }
+   ],
+   "assumptions": [
+    "Inactive volumes have been mapped to low-cost EBS storage (SC1 or GP3)",
+    "Data volumes are mapped to Amazon EBS (GP3/ST1/SC1/IO2 BX) based on capacity and performance requirements",
+    "Boot volumes are mapped to Amazon EBS GP3",
+    "30GB of boot disks considered for all in scope servers for directional costing",
+    "Boot disk size is removed from the actual used before evaluating data disk mapping",
+    "If used size is <30GiB, only boot disk is mapped, unmapped disks are ones with used capacity as 0",
+    "Intelligent capacity sizing selects between provisioned capacity and used capacity with a dynamic buffer (10-20%), based on utilization and waste thresholds",
+    "Disks with high capacity and performance requirements are split into Multi GP3 \u2013 Max 6",
+    "Region: us-east-1"
+   ],
+   "cash_flow": null,
+   "extras": {},
+   "capacity": {
+    "mapped_gib": 12428.54,
+    "unmapped_gib": 0.0
+   },
+   "cost_details": {
+    "overview": {
+     "physical": {
+      "total_volumes": 0,
+      "in_scope": 0,
+      "total_provisioned_capacity_gb": 0.0,
+      "total_used_capacity_gb": 0.0
+     },
+     "virtual": {
+      "total_volumes": 98,
+      "in_scope": 98,
+      "total_provisioned_capacity_gb": 23900.0,
+      "total_used_capacity_gb": 12428.54
+     }
+    },
+    "pricing": {
+     "cost-optimized": {
+      "io2_block_express": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "gp3": {
+       "current_disks": {
+        "volumes": 26,
+        "used_gb": 831.39
+       },
+       "boot_disks": {
+        "count": 26,
+        "size_gb": 780.0
+       },
+       "data_disks": {
+        "count": 26,
+        "size_gb": 155.74
+       },
+       "total_gb": 935.74,
+       "monthly_cost": 74.86,
+       "annual_cost": 898.32
+      },
+      "sc1": {
+       "current_disks": {
+        "volumes": 72,
+        "used_gb": 11597.15
+       },
+       "boot_disks": {
+        "count": 72,
+        "size_gb": 2160.0
+       },
+       "data_disks": {
+        "count": 72,
+        "size_gb": 16052.35
+       },
+       "total_gb": 18212.35,
+       "monthly_cost": 413.82,
+       "annual_cost": 4965.84
+      },
+      "st1": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "unmapped": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      }
+     },
+     "performance-optimized": {
+      "io2_block_express": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "gp3": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "sc1": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "st1": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "unmapped": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      }
+     },
+     "1-2-many": {
+      "io2_block_express": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "gp3": {
+       "current_disks": {
+        "volumes": 26,
+        "used_gb": 831.39
+       },
+       "boot_disks": {
+        "count": 26,
+        "size_gb": 780.0
+       },
+       "data_disks": {
+        "count": 26,
+        "size_gb": 155.74
+       },
+       "total_gb": 935.74,
+       "monthly_cost": 74.86,
+       "annual_cost": 898.32
+      },
+      "sc1": {
+       "current_disks": {
+        "volumes": 72,
+        "used_gb": 11597.15
+       },
+       "boot_disks": {
+        "count": 72,
+        "size_gb": 2160.0
+       },
+       "data_disks": {
+        "count": 72,
+        "size_gb": 16052.35
+       },
+       "total_gb": 18212.35,
+       "monthly_cost": 413.82,
+       "annual_cost": 4965.84
+      },
+      "st1": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      },
+      "unmapped": {
+       "current_disks": {
+        "volumes": 0,
+        "used_gb": 0.0
+       },
+       "boot_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "data_disks": {
+        "count": 0,
+        "size_gb": 0.0
+       },
+       "total_gb": 0.0,
+       "monthly_cost": 0.0,
+       "annual_cost": 0.0
+      }
+     }
+    },
+    "total_storage_mapped_gib": 16208.09,
+    "selected_deployment_option": "cost_optimized",
+    "total_monthly_selected": 488.68,
+    "total_annual_selected": 5864.16,
+    "cost_optimized_annual_cost": 5864.16,
+    "performance_optimized_annual_cost": 0.0,
+    "one_to_many_annual_cost": 5864.16,
+    "zombie_volumes": 98,
+    "excluded_volumes": 0
+   }
+  },
+  {
+   "metadata": {
+    "assessment_type": "on-prem",
+    "workload_types": [
+     "all"
+    ],
+    "region": "us-east-1"
+   },
+   "overview": {
+    "resources_analyzed": "55 Virtual Servers, 98 Server Volumes",
+    "capacity_analyzed": "23.34 TiB storage",
+    "recommended_annual_cost": 158981.10844,
+    "key_findings": [],
+    "assessment_breakdown": [
+     {
+      "name": "Total On Prem Cost",
+      "description": "Total On Prem Cost",
+      "is_recommended": true,
+      "annual_cost": 158981.10844,
+      "cost_breakdown": [
+       {
+        "cost_category": "compute",
+        "annual_cost": 109905.74444000001,
+        "cost_description": "On Prem Compute Cost"
+       },
+       {
+        "cost_category": "storage",
+        "annual_cost": 43158.8,
+        "cost_description": "On Prem Storage Cost"
+       },
+       {
+        "cost_category": "network",
+        "annual_cost": 5916.563999999999,
+        "cost_description": "On Prem Network Cost"
+       }
+      ]
+     }
+    ],
+    "resources_excluded": null,
+    "capacity_excluded": null,
+    "fallback_warnings": null
+   },
+   "recommendations": [],
+   "assumptions": [
+    "TCO Duration: 5 years",
+    "AWS Region: us-east-1",
+    "Discounts applied: Hardware 40%, Software 25%, Storage 50%",
+    "Compute costs include: server and hardware costs (based on industry benchmarks for CPU and Memory), software licensing costs (OS), facility costs",
+    "Storage costs include: server volumes",
+    "Network costs include: software, hardware, and bandwidth"
+   ],
+   "cash_flow": {
+    "items": [
+     {
+      "cost_category": "compute",
+      "year_1": 379177.19644,
+      "year_2": 42587.88144,
+      "year_3": 42587.88144,
+      "year_4": 42587.88144,
+      "year_5": 42587.88144
+     },
+     {
+      "cost_category": "storage",
+      "year_1": 81394.0,
+      "year_2": 33600.0,
+      "year_3": 33600.0,
+      "year_4": 33600.0,
+      "year_5": 33600.0
+     },
+     {
+      "cost_category": "network",
+      "year_1": 16434.899999999998,
+      "year_2": 3286.9799999999996,
+      "year_3": 3286.9799999999996,
+      "year_4": 3286.9799999999996,
+      "year_5": 3286.9799999999996
+     }
+    ]
+   },
+   "extras": {
+    "cash_flows": {
+     "total_cash_flows": [
+      477006.09644000005,
+      79474.86144,
+      79474.86144,
+      79474.86144,
+      79474.86144
+     ],
+     "compute_cash_flow": [
+      379177.19644,
+      42587.88144,
+      42587.88144,
+      42587.88144,
+      42587.88144
+     ],
+     "storage_cash_flow": [
+      81394.0,
+      33600.0,
+      33600.0,
+      33600.0,
+      33600.0
+     ],
+     "network_cash_flow": [
+      16434.899999999998,
+      3286.9799999999996,
+      3286.9799999999996,
+      3286.9799999999996,
+      3286.9799999999996
+     ]
+    }
+   }
+  },
+  {
+   "metadata": {
+    "assessment_type": "compute/ec2",
+    "workload_types": [
+     "ec2"
+    ],
+    "region": "us-east-1"
+   },
+   "overview": {
+    "resources_analyzed": "55 servers",
+    "capacity_analyzed": "286 vCPUs, 1,196.0 GB memory",
+    "recommended_annual_cost": 55016.84,
+    "key_findings": [
+     "Analyzed 55 active servers for EC2 migration",
+     "Successfully mapped 55 servers to EC2 instances",
+     "Recommended pricing: 3-Year Reserved Instances",
+     "Right-sizing applied: 25% CPU, 60% memory utilization"
+    ],
+    "assessment_breakdown": [
+     {
+      "name": "On-Demand",
+      "description": "On-Demand with shared tenancy",
+      "is_recommended": false,
+      "annual_cost": 105352.68,
+      "cost_breakdown": [
+       {
+        "cost_category": "compute",
+        "annual_cost": 100385.3,
+        "cost_description": "EC2 instance costs (On-Demand)"
+       },
+       {
+        "cost_category": "network",
+        "annual_cost": 4967.38,
+        "cost_description": "Data transfer costs (10.0% of the 1-Year NURI cost for the instance selected under 1-Year pricing)"
+       }
+      ],
+      "sections": [
+       {
+        "servers_total": 55,
+        "servers_mapped": 55,
+        "compute_cost": 100385.3,
+        "network_cost": 4967.38,
+        "region": "us-east-1",
+        "tenancy_mode": "shared",
+        "pricing_model": "on_demand",
+        "architecture": "x86 (Intel and AMD)",
+        "right_sizing": {
+         "cpu_utilization_percent": 25,
+         "memory_utilization_percent": 60
+        },
+        "network_cost_percentage": 0.1
+       }
+      ]
+     },
+     {
+      "name": "1-Year Reserved Instances",
+      "description": "1-Year Reserved Instances (No Upfront) with shared tenancy",
+      "is_recommended": false,
+      "annual_cost": 75372.26,
+      "cost_breakdown": [
+       {
+        "cost_category": "compute",
+        "annual_cost": 70404.88,
+        "cost_description": "EC2 instance costs (1-Year Reserved Instances)"
+       },
+       {
+        "cost_category": "network",
+        "annual_cost": 4967.38,
+        "cost_description": "Data transfer costs (10.0% of the 1-Year NURI cost for the instance selected under 1-Year pricing)"
+       }
+      ],
+      "sections": [
+       {
+        "servers_total": 55,
+        "servers_mapped": 55,
+        "compute_cost": 70404.88,
+        "network_cost": 4967.38,
+        "region": "us-east-1",
+        "tenancy_mode": "shared",
+        "pricing_model": "one_year_nuri",
+        "architecture": "x86 (Intel and AMD)",
+        "right_sizing": {
+         "cpu_utilization_percent": 25,
+         "memory_utilization_percent": 60
+        },
+        "network_cost_percentage": 0.1
+       }
+      ]
+     },
+     {
+      "name": "3-Year Reserved Instances (Recommended)",
+      "description": "3-Year Reserved Instances (No Upfront) with shared tenancy",
+      "is_recommended": true,
+      "annual_cost": 55016.84,
+      "cost_breakdown": [
+       {
+        "cost_category": "compute",
+        "annual_cost": 50049.46,
+        "cost_description": "EC2 instance costs (3-Year Reserved Instances)"
+       },
+       {
+        "cost_category": "network",
+        "annual_cost": 4967.38,
+        "cost_description": "Data transfer costs (10.0% of the 1-Year NURI cost for the instance selected under 1-Year pricing)"
+       }
+      ],
+      "sections": [
+       {
+        "servers_total": 55,
+        "servers_mapped": 55,
+        "compute_cost": 50049.46,
+        "network_cost": 4967.38,
+        "region": "us-east-1",
+        "tenancy_mode": "shared",
+        "pricing_model": "three_year_nuri",
+        "architecture": "x86 (Intel and AMD)",
+        "right_sizing": {
+         "cpu_utilization_percent": 25,
+         "memory_utilization_percent": 60
+        },
+        "network_cost_percentage": 0.1
+       }
+      ]
+     }
+    ],
+    "resources_excluded": null,
+    "capacity_excluded": null,
+    "fallback_warnings": [
+     {
+      "count": 55,
+      "entity_type": "Server",
+      "fallback_category": "missing_data",
+      "fallback_reason": "Utilization data missing or invalid.",
+      "fallback_impact": "Using defaults (25% CPU, 60% memory). Instance sizing may be over- or under-provisioned.",
+      "recommendation": "Update inventory with CPU and memory utilization metrics. Re-run assessment for accurate results."
+     }
+    ]
+   },
+   "recommendations": [
+    {
+     "category": "cost",
+     "priority": "high",
+     "effort": "medium",
+     "title": "Implement Reserved Instance Strategy",
+     "description": "Purchase 3-Year Reserved Instances for predictable workloads to achieve savings over on-demand pricing.",
+     "estimated_impact": "Significant annual savings vs on-demand"
+    },
+    {
+     "category": "performance",
+     "priority": "medium",
+     "effort": "low",
+     "title": "Right-Sizing Applied",
+     "description": "Instance sizes adjusted based on 25% CPU, 60% memory utilization to optimize costs.",
+     "estimated_impact": "Cost savings already included in recommended pricing"
+    }
+   ],
+   "assumptions": [
+    "Region: us-east-1",
+    "Tenancy: Shared",
+    "Pricing model: Reserved Instances, No Upfront",
+    "Architecture: x86 (Intel and AMD)",
+    "Right-sizing: 25% CPU, 60% memory utilization",
+    "Network cost: 10.0% of the 1-Year NURI cost for the instance selected under 1-Year pricing"
+   ],
+   "cash_flow": {
+    "items": [
+     {
+      "cost_category": "compute",
+      "year_1": 50049.46,
+      "year_2": 50049.46,
+      "year_3": 50049.46,
+      "year_4": 50049.46,
+      "year_5": 50049.46
+     },
+     {
+      "cost_category": "network",
+      "year_1": 4967.38,
+      "year_2": 4967.38,
+      "year_3": 4967.38,
+      "year_4": 4967.38,
+      "year_5": 4967.38
+     }
+    ]
+   },
+   "extras": {
+    "tenancy_mode": "shared",
+    "server_counts": {
+     "total": 55,
+     "mapped": 55,
+     "unmapped": 0,
+     "win2022_plus_li": 0
+    },
+    "by_os": {
+     "windows": {
+      "total": 29,
+      "mapped": 29,
+      "unmapped": 0
+     },
+     "linux": {
+      "total": 26,
+      "mapped": 26,
+      "unmapped": 0
+     }
+    },
+    "instance_distribution": {
+     "on_demand": {
+      "shared_tenancy": [
+       {
+        "instance_family": "m5a",
+        "instance_count": 3,
+        "annual_cost": 4267.86
+       },
+       {
+        "instance_family": "m7a",
+        "instance_count": 5,
+        "annual_cost": 3638.66
+       },
+       {
+        "instance_family": "r5a",
+        "instance_count": 8,
+        "annual_cost": 11552.72
+       },
+       {
+        "instance_family": "r7a",
+        "instance_count": 10,
+        "annual_cost": 9197.26
+       },
+       {
+        "instance_family": "t3a",
+        "instance_count": 16,
+        "annual_cost": 14585.08
+       },
+       {
+        "instance_family": "x2iedn",
+        "instance_count": 3,
+        "annual_cost": 24806.43
+       },
+       {
+        "instance_family": "x8i",
+        "instance_count": 10,
+        "annual_cost": 37304.67
+       }
+      ],
+      "dedicated_hosts": []
+     },
+     "one_year_nuri": {
+      "shared_tenancy": [
+       {
+        "instance_family": "m5a",
+        "instance_count": 3,
+        "annual_cost": 3426.9
+       },
+       {
+        "instance_family": "m7a",
+        "instance_count": 5,
+        "annual_cost": 2779.31
+       },
+       {
+        "instance_family": "r5a",
+        "instance_count": 8,
+        "annual_cost": 8609.36
+       },
+       {
+        "instance_family": "r7a",
+        "instance_count": 10,
+        "annual_cost": 6940.73
+       },
+       {
+        "instance_family": "t3a",
+        "instance_count": 16,
+        "annual_cost": 10646.54
+       },
+       {
+        "instance_family": "x1e",
+        "instance_count": 2,
+        "annual_cost": 10541.78
+       },
+       {
+        "instance_family": "x2iedn",
+        "instance_count": 1,
+        "annual_cost": 5447.17
+       },
+       {
+        "instance_family": "x8i",
+        "instance_count": 10,
+        "annual_cost": 26980.47
+       }
+      ],
+      "dedicated_hosts": []
+     },
+     "three_year_nuri": {
+      "shared_tenancy": [
+       {
+        "instance_family": "m5a",
+        "instance_count": 3,
+        "annual_cost": 2980.14
+       },
+       {
+        "instance_family": "m7a",
+        "instance_count": 5,
+        "annual_cost": 2251.51
+       },
+       {
+        "instance_family": "r5a",
+        "instance_count": 6,
+        "annual_cost": 4472.88
+       },
+       {
+        "instance_family": "r7a",
+        "instance_count": 10,
+        "annual_cost": 5555.76
+       },
+       {
+        "instance_family": "t3a",
+        "instance_count": 18,
+        "annual_cost": 11152.96
+       },
+       {
+        "instance_family": "x1e",
+        "instance_count": 2,
+        "annual_cost": 6231.86
+       },
+       {
+        "instance_family": "x2iedn",
+        "instance_count": 1,
+        "annual_cost": 3296.25
+       },
+       {
+        "instance_family": "x8i",
+        "instance_count": 10,
+        "annual_cost": 19075.48
+       }
+      ],
+      "dedicated_hosts": []
+     }
+    },
+    "version_distribution": {
+     "windows_server": {
+      "2022": 4,
+      "2019": 15,
+      "2016": 7,
+      "2008_or_earlier": 1,
+      "2012_r2": 2
+     },
+     "sql_server": {}
+    }
+   }
+  }
+ ],
+ "metadata": {
+  "scenario_name": "Initial Assessment",
+  "aggregation_timestamp": "2026-10-20T20:20:03.000000Z",
+  "source_files": [
+   "storage_ebs_result.json",
+   "on-prem_on_prem_assessment_output.json",
+   "compute_ec2_ec2_assessment.json"
+  ]
+ }
+}

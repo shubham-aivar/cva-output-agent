@@ -1,0 +1,28 @@
+[project]
+name = "aivar-cva-agent"
+version = "0.12.2"
+description = "A01 CVA Output Processing Agent for Project Elevate (Aivar Innovations)"
+requires-python = ">=3.11"
+dependencies = ["openpyxl>=3.1", "python-pptx>=1.0"]
+
+[project.optional-dependencies]
+aws = ["boto3>=1.34", "mcp>=1.23,<2"]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+cva = "cva.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["cva*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501", "E701", "E702", "E731", "B008", "B905", "E741"]

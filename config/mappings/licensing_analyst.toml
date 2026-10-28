@@ -1,0 +1,18 @@
+# Analyst licensing workbook (the Pilot input, SOW OI-4).  The real layout is UNKNOWN; these aliases follow the
+# AWS OLA template's licensing columns so a copy of that sheet, or a simple analyst sheet, loads without change.
+[sheet]
+names = ["Licensing", "Licenses", "License Findings", "Sheet1", "Export Template"]
+
+[columns]
+workload = ["Server Name", "Workload", "On-Prem Server Name", "Machine Name"]
+product = ["Product", "License Product"]
+instance = ["SQL Instance", "Instance", "On-Prem Database Instance Name"]
+model = ["License Model", "AWS SQL Licensing Model", "Model"]
+licensed_by = ["Licensed By", "License SQL By Cores or Server/CAL", "License Metric"]
+active_sa = ["Active SA", "Active SQL SA?", "Software Assurance", "SA Active"]
+include = ["Include In License Count", "--Override -- Inc / Excl Entire Server From SQL License Count"]
+cores = ["Licensed Cores", "Cores", "Core Licenses"]
+tenancy = ["Tenancy"]
+basis = ["Basis", "Rationale", "Notes"]
+confidence = ["Confidence"]
+required = ["workload"]

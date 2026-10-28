@@ -1,0 +1,43 @@
+# Aivar CVA Output Processing Agent (A01): settings.
+# Every value here is a lever a reviewer or engineer may change.  Changing one
+# changes the configuration digest recorded with every run and on the workbook Summary sheet.
+
+[run]
+customer_label = "Customer (anonymised)"
+
+[sizing]
+cpu_target_util = 80                 # percent of target vCPU we allow to be used (Cloudamize uses 80 too)
+mem_target_util = 85
+snapshot_headroom = 1.30             # applied when data is a single snapshot (grade C)
+inventory_headroom = 1.00            # no utilisation: keep allocation
+saturated_peak_pct = 99              # a peak at/above this is treated as saturation, not a real need
+saturated_avg_ceiling = 40           # saturated peak but average below this -> size on average x avg_headroom
+avg_headroom = 2.0
+burstable_avg_max = 20               # burstable (t-family) only when average CPU is at or below this
+burstable_peak_max = 99
+min_vcpu = 1
+cpu_perf_factor = 1.0                # target vs source per-vCPU performance (>1 = target faster). Sources that map
+                                     # CPU by hardware benchmark (Cloudamize 'Download All') are used as measured.
+storage_headroom = 1.20
+
+[pricing]
+hours_per_year = 8760
+region = "us-east-1"
+catalog = "rules/pricing_catalog.toml"
+# BYOL scenario with no licensing input: "not_computable" (default) or "illustrative_upper_bound"
+byol_without_input = "not_computable"
+
+[parity]
+cost_tolerance_pct = 15              # |our - source| / source above this is an outlier
+
+[quality]
+snapshot_min_days = 14
+util_spike_share = 0.30              # >30% of workloads share one identical utilisation value
+
+[agent]
+max_turns = 15
+max_tool_calls = 40
+max_tokens = 60000
+model_id = "us.anthropic.claude-opus-4-6-v1"   # as available in Aivar Vision; change per account
+region = "us-east-1"
+

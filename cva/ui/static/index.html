@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CVA Output Processing Agent</title>
+<style>
+:root{
+  --paper:#f4f6f9; --card:#ffffff; --ink:#14213d; --muted:#5b6578; --rule:#d9dee7; --rule2:#eceff4;
+  --teal:#0b7a75; --teal-w:#e2f1f0; --amber:#a24c07; --amber-w:#fdf0d8; --red:#b42318; --red-w:#fde7e4; --slate:#3b4a63;
+  --font: Inter, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:var(--font);color:var(--ink);background:var(--paper);font-size:14px;line-height:1.5;display:grid;grid-template-columns:250px minmax(0,1fr)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+/* rail */
+#rail{background:var(--ink);color:#dfe6f3;padding:20px 16px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow:auto}
+#rail h1{font-size:15px;margin:0;font-weight:650;color:#fff;line-height:1.3}
+#rail small{color:#9fb0cc}
+#rail .who{display:flex;flex-direction:column;gap:4px}
+#rail input{background:#1d2d52;border:1px solid #31456f;border-radius:6px;padding:7px 9px;color:#fff;width:100%}
+#rail nav{display:flex;flex-direction:column;gap:2px}
+#rail nav button{background:none;border:0;text-align:left;color:#cfd9ec;padding:8px 10px;border-radius:6px}
+#rail nav button[aria-current=true]{background:#24376a;color:#fff}
+#rail nav button:hover{background:#1d2d52}
+#rail .runs{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto}
+#rail .runs button{background:none;border:1px solid transparent;text-align:left;color:#cfd9ec;padding:6px 9px;border-radius:6px;font-size:13px}
+#rail .runs button[aria-current=true]{border-color:#4a6199;background:#1d2d52;color:#fff}
+.btn-new{background:var(--teal);border:0;color:#fff;border-radius:6px;padding:8px 10px;font-weight:600}
+/* main */
+main{min-width:0}
+#strip{position:sticky;top:0;z-index:5;background:rgba(244,246,249,.96);backdrop-filter:blur(4px);border-bottom:1px solid var(--rule);padding:10px 28px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#strip .title{font-weight:650}
+#strip .meta{color:var(--muted);font-size:13px}
+.gatepill{border-radius:999px;padding:4px 12px;font-weight:650;font-size:13px}
+.gatepill.open{background:var(--amber-w);color:var(--amber)}
+.gatepill.clear{background:var(--teal-w);color:var(--teal)}
+.gatepill.final{background:var(--teal);color:#fff}
+#view{padding:24px 28px 80px;max-width:1180px}
+h2{font-size:22px;margin:0 0 4px;font-weight:650}
+h3{font-size:16px;margin:26px 0 8px;font-weight:650}
+.lede{color:var(--muted);margin:0 0 18px;max-width:78ch}
+.say{font-size:18px;line-height:1.55;max-width:70ch;margin:14px 0 4px}
+.src{font-size:12px;color:var(--muted)}
+.chip{display:inline-block;border-radius:5px;padding:1px 8px;font-size:12px;font-weight:600;background:var(--rule2);color:var(--slate);margin-right:4px;white-space:nowrap}
+.chip.teal{background:var(--teal-w);color:var(--teal)} .chip.amber{background:var(--amber-w);color:var(--amber)} .chip.red{background:var(--red-w);color:var(--red)}
+table{border-collapse:collapse;width:100%;background:var(--card);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+th{background:#eef1f7;text-align:left;font-weight:650;font-size:12.5px;padding:8px 10px;border-bottom:1px solid var(--rule);color:var(--slate)}
+td{padding:7px 10px;border-bottom:1px solid var(--rule2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer} tbody tr.click:hover td{background:#f6f9fc}
+.right{text-align:right}
+button.fig{background:none;border:0;border-bottom:1.5px dotted var(--teal);padding:0 1px;color:inherit;font-weight:inherit;font-variant-numeric:tabular-nums}
+button.fig:hover{background:var(--teal-w)}
+.btn{background:var(--ink);color:#fff;border:0;border-radius:6px;padding:8px 14px;font-weight:600}
+.btn.alt{background:#fff;color:var(--ink);border:1px solid var(--rule)}
+.btn.good{background:var(--teal)} .btn.bad{background:var(--red)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:3px;margin:8px 0}
+.field input,.field select,.field textarea{border:1px solid var(--rule);border-radius:6px;padding:7px 9px;background:#fff;min-width:200px}
+.field textarea{min-height:64px;width:100%}
+textarea{display:block;width:100%;min-height:76px;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;background:#fff;margin:6px 0}
+select{border:1px solid var(--rule);border-radius:6px;padding:7px 9px;background:#fff}
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:14px 16px}
+.notice{border-radius:8px;padding:10px 14px;margin:10px 0}
+.notice.amber{background:var(--amber-w);color:#6b3305} .notice.red{background:var(--red-w);color:#7a1a12} .notice.teal{background:var(--teal-w);color:#0a5a56}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 36px}
+dl.facts{margin:0;display:grid;grid-template-columns:minmax(200px,280px) 1fr;column-gap:24px}
+dl.facts dt,dl.facts dd{margin:0;padding:7px 0;border-bottom:1px solid var(--rule)}
+dl.facts dd{text-align:left;font-variant-numeric:tabular-nums;font-weight:600}
+.chat{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px;max-width:760px}
+.turn{border-radius:10px;padding:8px 12px;max-width:88%;line-height:1.4}
+.turn .who{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.7;margin-bottom:2px}
+.turn .msg{white-space:pre-wrap;word-break:break-word;font-size:13.5px}
+.turn.svc{background:var(--card);border:1px solid var(--rule);align-self:flex-start}
+.turn.a01{background:var(--rule2);align-self:flex-start}
+.turn.me{background:var(--teal-w);color:#0a5a56;align-self:flex-end}
+/* scenario bars */
+.bars{display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.bar{display:grid;grid-template-columns:110px 1fr 150px;gap:14px;align-items:center}
+.bar .track{height:30px;background:var(--rule2);border-radius:4px;position:relative;overflow:hidden}
+.bar .fill{height:100%;background:var(--teal);border-radius:4px}
+.bar .fill.partial{background:repeating-linear-gradient(135deg,var(--teal),var(--teal) 8px,#2f9892 8px,#2f9892 16px)}
+.bar .fill.nc{background:repeating-linear-gradient(135deg,#d6dbe5,#d6dbe5 7px,#eef1f6 7px,#eef1f6 14px);width:100%}
+.bar .lbl{font-weight:600}
+.bar .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
+.mini{display:grid;grid-template-columns:130px 1fr 52px;gap:10px;align-items:center;margin:6px 0}
+.mini .t{height:10px;background:var(--rule2);border-radius:3px}.mini .t i{display:block;height:100%;background:var(--teal);border-radius:3px}
+/* drawer */
+#drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:#fff;border-left:1px solid var(--rule);box-shadow:-8px 0 24px rgba(20,33,61,.12);transform:translateX(102%);transition:transform .18s ease;z-index:20;overflow:auto;padding:20px}
+#drawer.open{transform:none}
+#drawer h4{margin:0 0 4px;font-size:16px}
+@media (prefers-reduced-motion:reduce){#drawer{transition:none}}
+dialog{border:1px solid var(--rule);border-radius:10px;padding:20px;max-width:720px;width:92vw}
+dialog::backdrop{background:rgba(20,33,61,.4)}
+pre{white-space:pre-wrap;word-break:break-word;background:#f0f3f8;border-radius:6px;padding:8px;font-size:12px;margin:4px 0}
+details summary{cursor:pointer;color:var(--slate)}
+.msg{border-left:3px solid var(--rule);padding:2px 10px;margin:8px 0}.msg.assistant{border-color:var(--teal)}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;z-index:50;max-width:80vw}
+.toast.err{background:var(--red)}
+@media (max-width:900px){body{grid-template-columns:1fr}#rail{position:static;height:auto}.bar{grid-template-columns:90px 1fr 110px}}
+</style>
+</head>
+<body>
+<aside id="rail">
+  <div><h1>CVA Output Processing Agent</h1><small>A01 &middot; Project Elevate</small></div>
+  <div class="who"><label for="who"><small>Reviewer name (recorded on every decision)</small></label>
+    <input id="who" placeholder="Your name" autocomplete="name"></div>
+  <button class="btn-new" id="newrun">New run&hellip;</button>
+  <div><small>Runs</small><div class="runs" id="runs"></div></div>
+  <nav id="nav" aria-label="Sections"></nav>
+  <form id="signout" method="post" action="/logout" hidden><small id="whoami"></small> <button type="submit" class="btn-new">Sign out</button></form>
+</aside>
+<main>
+  <div id="strip"></div>
+  <div id="view" tabindex="-1"></div>
+</main>
+<aside id="drawer" aria-label="Details" aria-hidden="true"></aside>
+<dialog id="dlg"></dialog>
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+function el(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v);
+  }
+  kids.flat(Infinity).forEach(c => { if (c == null || c === false) return; e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return e;
+}
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (r.status === 401) { location.href = "/login"; throw new Error("sign in required"); }
+  const j = await r.json();
+  if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+  return j;
+}
+function toast(msg, err) { const t = el("div", { class: "toast" + (err ? " err" : ""), role: "status" }, msg); document.body.append(t); setTimeout(() => t.remove(), err ? 7000 : 3200); }
+const money = v => v == null ? "not computable" : "$" + Math.round(v).toLocaleString("en-US");
+const num = (v, d = 0) => v == null ? "n/a" : Number(v).toLocaleString("en-US", { maximumFractionDigits: d });
+const VIEWS = [["overview", "Overview"], ["transform", "AWS Transform"], ["workloads", "Workloads"], ["licensing", "Licensing"], ["exceptions", "Exceptions"], ["agent", "Agent"], ["review", "Review and release"], ["outputs", "Outputs"], ["audit", "Audit"]];
+const S = { run: null, view: "overview", ov: null, figs: null, app: { demo_samples: false }, runs: [] };
+const who = () => $("#who").value.trim();
+function needWho() { if (!who()) { toast("Enter your name in the left rail first; every decision is recorded against it.", true); $("#who").focus(); return false; } return true; }
+async function act(fn, ok) { try { const r = await fn(); if (ok) toast(ok); await refresh(); return r; } catch (e) { toast(e.message, true); } }
+
+// ------------------------------------------------------------------ figure receipts
+async function figures() { if (!S.figs) { const l = await api(`/api/run/${S.run}/figures`); S.figs = Object.fromEntries(l.map(f => [f.key, f])); } return S.figs; }
+function fig(key, fmt) {
+  const f = S.ov && S.ov.figures ? S.ov.figures[key] : undefined;
+  const txt = fmt ? fmt(f) : (typeof f === "number" ? num(f, Number.isInteger(f) ? 0 : 1) : (f == null ? "n/a" : String(f)));
+  return el("button", { class: "fig", type: "button", title: "Where does this number come from?", onclick: () => showFigure(key) }, txt);
+}
+async function showFigure(key) {
+  const f = (await figures())[key]; const d = $("#drawer");
+  d.replaceChildren(
+    el("button", { class: "btn alt", onclick: closeDrawer }, "Close"),
+    el("h4", { style: "margin-top:14px" }, f ? f.label : key),
+    el("p", { class: "lede" }, "Every number has a receipt: the rule that produced it, the version of that rule, its inputs and the files it came from."),
+    f ? el("dl", { class: "facts" },
+      el("dt", {}, "Figure"), el("dd", {}, f.id), el("dt", {}, "Value"), el("dd", {}, f.unit === "USD/yr" ? money(f.value) : String(f.value) + " " + f.unit),
+      el("dt", {}, "Rule"), el("dd", {}, f.rule + " @ version " + f.rule_version)) : el("p", {}, "No such figure."),
+    f ? el("h3", {}, "Inputs") : null, f ? el("pre", {}, JSON.stringify(f.inputs, null, 2)) : null,
+    f && f.refs.length ? el("p", { class: "src" }, "Source files: " + f.refs.join(", ")) : null,
+    el("p", { class: "src" }, "The same figure, with its workload-level detail, is on the Ledger and Workloads sheets of the supporting workbook."));
+  openDrawer();
+}
+function openDrawer() { const d = $("#drawer"); d.classList.add("open"); d.setAttribute("aria-hidden", "false"); }
+function closeDrawer() { const d = $("#drawer"); d.classList.remove("open"); d.setAttribute("aria-hidden", "true"); }
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+
+// ------------------------------------------------------------------ shell
+async function loadRuns(select) {
+  const { runs, portfolio } = await api("/api/runs");
+  S.portfolio = portfolio; S.runs = runs;
+  const box = $("#runs"); box.replaceChildren();
+  runs.slice().reverse().forEach(r => box.append(el("button", { "aria-current": r.run_id === S.run, onclick: () => selectRun(r.run_id) },
+    r.run_id + (r.finalised ? " (final)" : ""), el("br"), el("small", {}, r.label || r.files[0]))));
+  if (!runs.length) box.append(el("small", {}, "No runs yet."));
+  if (select && runs.length && !S.run) await selectRun(runs[runs.length - 1].run_id);
+  else if (!runs.length) render();
+}
+async function selectRun(id) { S.run = id; S.figs = null; location.hash = id + "/" + S.view; await refresh(); await loadRuns(false); }
+async function refresh() { if (!S.run) return render(); S.figs = null; try { S.ov = await api(`/api/run/${S.run}/overview`); } catch (e) { toast(e.message, true); } render(); }
+function nav() {
+  const n = $("#nav"); n.replaceChildren();
+  VIEWS.forEach(([k, t]) => n.append(el("button", { "aria-current": k === S.view, onclick: () => { S.view = k; location.hash = S.run + "/" + k; render(); } }, t)));
+}
+function strip() {
+  const s = $("#strip"); s.replaceChildren();
+  if (!S.ov) { s.append(el("span", { class: "title" }, "No run selected")); return; }
+  const g = S.ov.gate, fin = S.ov.finalised;
+  s.append(el("div", {}, el("span", { class: "title" }, S.run + (S.ov.manifest.label ? "  " + S.ov.manifest.label : "")),
+    el("div", { class: "meta" }, S.ov.estate.files.join(", "), "  |  ", S.ov.estate.workloads + " workloads  |  data grade " + S.ov.meta.richness.grade)),
+    el("span", { class: "gatepill " + (fin ? "final" : g.ready ? "clear" : "open") }, fin ? "FINAL: released" : g.ready ? "Review gate clear: ready to finalise" : "DRAFT: " + g.open + " review item(s) open"));
+}
+function render() {
+  clearInterval(S.poll); nav(); strip(); const v = $("#view"); v.replaceChildren();
+  if (!S.run || !S.ov) { v.append(emptyState()); return; }
+  ({ overview, transform: awsView, workloads, licensing, exceptions, agent, review, outputs, audit }[S.view] || overview)(v);
+}
+function emptyState() {
+  return el("div", {}, el("h2", {}, S.runs.length ? "Open a run, or upload new files" : "No runs yet"),
+    el("p", { class: "lede" }, "Nothing is shown until you upload your own files. Start with the estate export from Cloudamize (MPA export, OLA Accelerator export or Download All Reports) or an RVTools file; add a licensing sheet and interview notes if you have them. Every figure on the other tabs is computed from what you upload."),
+    el("button", { class: "btn good", onclick: newRun }, "Upload files and create a run\u2026"),
+    S.runs.length ? el("p", { class: "src" }, "Earlier runs on this machine are listed on the left; open one to continue it.") : null,
+    S.app.demo_samples ? el("p", { class: "notice amber" }, "DEMO MODE is on: bundled sample files are offered in the upload dialog. Start the UI without --demo-samples for your own files only.") : null);
+}
+
+// ------------------------------------------------------------------ overview
+function overview(v) {
+  const o = S.ov, f = o.figures, rich = o.meta.richness;
+  v.append(el("h2", {}, "Overview"), el("p", { class: "lede" }, S.ov.scenarios.length ? "Cost per scenario for the same estate, and how far each can be trusted." : "What A01 found in the file. The cost figures come from AWS Transform."));
+  const c = o.commentary.executive_summary;
+  v.append(el("p", { class: "say" }, c.text), el("div", { class: "src" }, "Commentary source: " + c.source + ". "), );
+  if (o.meta.figures_source === "aws_transform") v.append(el("div", { class: "notice teal" }, "Figures come from the imported AWS Transform assessment \u201c" + (o.aws ? o.aws.scenario : "") + "\u201d. A01's own estimate is a cross-check only."));
+  else if (o.meta.figures_source === "a01_estimate") v.append(el("div", { class: "notice amber" }, "Figures are A01's own OFFLINE estimate on a PLACEHOLDER price catalog, not the AWS Price List. Import an AWS Transform assessment (Outputs) for AWS's numbers."));
+  if (!o.scenarios.length) v.append(noFigures(o));
+  const max = Math.max(...o.scenarios.map(s => s.total || 0), 1);
+  const bars = el("div", { class: "bars", role: "list" });
+  const keyOf = { on_demand: "scenario.on_demand.total", ri_1yr: "scenario.ri_1yr.total", ri_3yr: "scenario.ri_3yr.total", byol: "scenario.byol.total" };
+  o.scenarios.forEach(s => bars.append(el("div", { class: "bar", role: "listitem" },
+    el("div", { class: "lbl" }, s.label),
+    el("div", { class: "track" }, el("div", { class: "fill " + (s.status === "not_computable" || s.status === "not_in_assessment" ? "nc" : s.status === "computed" ? "" : "partial"), style: s.total != null ? `width:${Math.max(3, 100 * s.total / max)}%` : "" })),
+    el("div", { class: "val" }, s.total == null ? el("span", { class: "chip amber" }, s.status.replace(/_/g, " ")) : fig(keyOf[s.id], x => money(x)), el("div", { class: "src" }, (s.status !== "computed" && s.total != null ? s.status + " | " : "") + (s.source === "aws_transform" ? "AWS Transform" : "A01 estimate"))))));
+  v.append(bars);
+  const notes = o.scenarios.flatMap(s => s.notes.map(n => s.label + ": " + n));
+  notes.forEach(n => v.append(el("div", { class: "src" }, n)));
+  const col = (title, ...rows) => el("div", {}, el("h3", {}, title), el("dl", { class: "facts" }, rows.flat()));
+  const kv = (k, val) => [el("dt", {}, k), el("dd", {}, val)];
+  const lc = o.licensing, kp = o.kpis;
+  v.append(el("div", { class: "cols" },
+    !o.sizing_source ? null : col(o.sizing_source === "aws_transform" ? "Rightsizing (AWS Transform)" : "Rightsizing (A01 estimate)", kv("Over-provisioned", fig("sizing.downsize")), kv("Close to right", fig("sizing.same")), kv("Need more capacity", fig("sizing.upsize")),
+      kv("Recommended vCPU", fig("sizing.vcpu_rec")), kv("Low-confidence sizings", fig("sizing.conf_low"))),
+    col("Licensing", kv("Input", lc.mode), kv("SQL Server coverage", fig("licensing.coverage_sql", x => x == null ? "not detected" : num(x, 1) + "%")),
+      kv("Windows Server coverage", fig("licensing.coverage_windows", x => num(x, 1) + "%")), kv("Items without a finding", fig("licensing.gaps"))),
+    col("Risk and lifecycle", kv("Past end of support", fig("lifecycle.eos")), kv("Approaching", fig("lifecycle.approaching")), kv("Workloads at risk", fig("lifecycle.at_risk")),
+      kv("Rule dates", o.meta.lifecycle_rules_unverified ? "UNVERIFIED" : "verified")),
+    col("Data quality", kv("Errors", fig("quality.error")), kv("Warnings", fig("quality.warn")), kv("Informational", fig("quality.info")), kv("Parity outliers", fig("parity.outliers"))),
+    col("Data richness", kv("Grade", fig("estate.data_grade")), kv("Basis", rich.label), kv("Peak coverage", Math.round(rich.peak_coverage * 100) + "%"), kv("Memory coverage", Math.round(rich.memory_coverage * 100) + "%")),
+    col("Agent and review", kv("Proposals accepted / rejected / pending", `${kp.proposals.accepted} / ${kp.proposals.rejected} / ${kp.proposals.pending}`),
+      kv("Analyst hours logged", kp.analyst_hours_logged == null ? "none" : kp.analyst_hours_logged), kv("Turnaround so far (hours)", kp.turnaround_hours),
+      kv("Model calls / tokens", `${kp.llm_calls} / ${num(kp.tokens_in + kp.tokens_out)}`))));
+  v.append(estimatePanel(o));
+  v.append(el("p", { class: "src" }, rich.reasons.join("; ") + ". Click any underlined figure to see its receipt."));
+}
+
+// ------------------------------------------------------------------ workloads
+async function workloads(v) {
+  v.append(el("h2", {}, "Workloads"), el("p", { class: "lede" }, "One row per server. Open a row for the sizing basis, cost in each scenario, licensing treatment, lifecycle and source rows."));
+  const awsSizing = S.ov.sizing_source === "aws_transform";
+  if (awsSizing) v.append(el("div", { class: "notice teal" }, "Sizing and costs on this tab are AWS Transform's per-server results (instance from the recommended pricing model; annual cost = compute, license, network and storage; AWS's support charge is not allocated to servers). Click a row for every pricing model, the utilization AWS used, and its warnings."));
+  else if (!S.ov.estimate_ran) v.append(el("div", { class: "notice amber" }, "Sizing and costs are hidden: AWS Transform's per-server results are not imported (import the analysis workbook, or use 'Fetch the results now') and A01's offline estimate has not been run. This tab shows the inventory and lifecycle findings only."), el("button", { class: "btn alt", onclick: runEstimate }, "Run A01's offline estimate"));
+  if (S.ov.aws && S.ov.estimate_ran) v.append(el("div", { class: "notice amber" }, awsSizing ? "A01's own per-server estimate (placeholder prices) is also shown, as a cross-check: it is never the headline." : "Sizing and costs on this tab are A01's own per-server ESTIMATE (placeholder prices). The figures on the slides come from AWS Transform; its per-server results were not imported."));
+  const rows = await api(`/api/run/${S.run}/workloads`);
+  const q = el("input", { placeholder: "Search by name, OS or instance", "aria-label": "Search workloads", style: "min-width:260px" });
+  const dir = el("select", { "aria-label": "Filter by direction" }, ["all", "downsize", "same", "upsize"].map(x => el("option", { value: x }, x === "all" ? "Any direction" : x)));
+  const conf = el("select", { "aria-label": "Filter by confidence" }, ["all", "high", "medium", "low"].map(x => el("option", { value: x }, x === "all" ? "Any confidence" : x)));
+  const body = el("tbody");
+  const draw = () => {
+    body.replaceChildren(); const t = q.value.toLowerCase(); let n = 0;
+    rows.forEach(r => {
+      const az = awsSizing && r.aws && r.aws.matched ? r.aws : null;
+      const inst = az ? az.instance : r.instance, dirn = az ? az.direction : r.direction, cf = az ? az.confidence : r.confidence;
+      if (dir.value !== "all" && dirn !== dir.value) return; if (conf.value !== "all" && cf !== conf.value) return;
+      if (t && !(r.name + " " + (r.os || "") + " " + (inst || "")).toLowerCase().includes(t)) return;
+      if (++n > 300) return;
+      const chips = el("td", {}, r.lifecycle.map(x => el("span", { class: "chip " + (x === "end_of_support" ? "red" : "amber") }, x.replace("_", " "))));
+      const dirChip = dirn ? el("span", { class: "chip " + (dirn === "upsize" ? "amber" : dirn === "downsize" ? "teal" : "") }, dirn) : "";
+      const cfChip = cf ? el("span", { class: "chip " + (cf === "low" ? "amber" : "") }, cf) : "";
+      const first = [el("td", {}, r.name), el("td", {}, r.os || ""), el("td", {}, r.env || ""), el("td", { class: "num" }, r.vcpu == null ? "n/a" : r.vcpu)];
+      const cells = awsSizing
+        ? [...first, el("td", {}, az ? inst : (r.aws && !r.aws.matched ? el("span", { class: "chip amber", title: r.aws.reason }, "not in AWS results") : "\u2014")),
+           el("td", { class: "num" }, az ? `${az.vcpu ?? "?"} / ${az.ram_gb ?? "?"} GB` : ""), el("td", {}, dirChip), el("td", {}, cfChip),
+           el("td", { class: "right num" }, awsCost(r, "on_demand") == null ? "\u2014" : money(awsCost(r, "on_demand"))),
+           el("td", { class: "right num" }, awsCost(r, "three_year_nuri") == null ? "\u2014" : money(awsCost(r, "three_year_nuri"))),
+           ...(S.ov.estimate_ran ? [el("td", { class: "right num" }, r.on_demand == null ? "\u2014" : money(r.on_demand))] : []), chips]
+        : [...first, el("td", {}, r.instance || "\u2014"), el("td", {}, dirChip), el("td", {}, cfChip), el("td", { class: "right num" }, r.on_demand == null ? "\u2014" : money(r.on_demand)), chips];
+      body.append(el("tr", { class: "click", tabindex: 0, onclick: () => showWorkload(r.name, r.aws), onkeydown: e => { if (e.key === "Enter") showWorkload(r.name, r.aws); } }, ...cells));
+    });
+    count.textContent = `${n} shown of ${rows.length}` + (n > 300 ? " (first 300)" : "");
+  };
+  const count = el("span", { class: "src" });
+  [q, dir, conf].forEach(x => x.addEventListener("input", draw));
+  v.append(el("div", { class: "row" }, q, dir, conf, count),
+    el("div", { style: "overflow:auto;margin-top:10px" }, el("table", {}, el("thead", {}, el("tr", {}, (awsSizing ? ["Workload", "OS", "Env", "vCPU now", "AWS instance", "AWS vCPU / RAM", "Direction", "Confidence", "On-Demand / yr (AWS)", "3-yr RI / yr (AWS)", ...(S.ov.estimate_ran ? ["On-Demand / yr (A01 estimate)"] : []), "Lifecycle"]
+          : ["Workload", "OS", "Env", "vCPU", "Recommended", "Direction", "Confidence", "On-Demand / yr (A01 estimate)", "Lifecycle"]).map(h => el("th", h === "AWS instance" ? { title: "The instance AWS recommends for its recommended pricing model. Click a row to see every pricing model." } : {}, h)))), body)));
+  draw();
+}
+function awsBlock(a) {
+  if (!a) return [];
+  if (!a.matched) return [el("h3", {}, "AWS Transform per-server result"), el("div", { class: "src" }, a.reason)];
+  const lbl = { on_demand: "On-Demand", one_year_nuri: "1-year RI (no upfront)", three_year_nuri: "3-year RI (no upfront)" }, pc = x => x == null ? "n/a" : Math.round(x * 100) + "%";
+  return [el("h3", {}, "AWS Transform per-server result"),
+    el("table", {}, el("thead", {}, el("tr", {}, ["Pricing model", "Instance", "vCPU / RAM", "Annual total", "of which compute", "network", "license"].map(h => el("th", {}, h)))),
+      el("tbody", {}, ...Object.entries(a.models).map(([k, m]) => el("tr", {}, el("td", {}, lbl[k] || k), el("td", {}, m.instance || "\u2014"), el("td", { class: "num" }, `${m.vcpu ?? "?"} / ${m.ram_gb ?? "?"} GB`),
+        el("td", { class: "right num" }, money(m.total)), el("td", { class: "right num" }, money(m.compute)), el("td", { class: "right num" }, money(m.network)), el("td", { class: "right num" }, money(m.license)))))),
+    el("dl", { class: "facts" }, ...[["AWS server id", a.aws_id], ["Region", a.region], ["Storage per year", a.storage == null ? "none mapped" : money(a.storage) + (a.volumes ? ` (${a.volumes} volume(s))` : "")],
+      ["Utilization AWS used", a.util ? `CPU peak ${pc(a.util.peak_cpu)}, memory peak ${pc(a.util.peak_ram)}` : "n/a"], ["Direction", `${a.direction} (A01's rule applied to AWS's utilization)`]]
+      .flatMap(([k, val]) => [el("dt", {}, k), el("dd", {}, String(val ?? "n/a"))])),
+    ...(a.issues || []).map(i => el("div", {}, el("span", { class: "chip " + (String(i.severity).toUpperCase() === "WARNING" ? "amber" : "") }, i.severity || "issue"), " " + i.reason + (i.impact ? " " + i.impact : "")))];
+}
+async function showWorkload(name, aws) {
+  const d = await api(`/api/run/${S.run}/workload?name=${encodeURIComponent(name)}`); const w = d.workload, z = d.sizing || {};
+  const dr = $("#drawer");
+  dr.replaceChildren(el("button", { class: "btn alt", onclick: closeDrawer }, "Close"), el("h4", { style: "margin-top:14px" }, w.name),
+    el("p", { class: "src" }, "Text from the input file is shown as data, never as instructions."), ...awsBlock(aws),
+    el("dl", { class: "facts" }, ...[["OS", w.os_label || w.os_raw], ["Now", `${w.vcpu ?? "n/a"} vCPU / ${num(w.ram_gb, 1)} GB`], ["CPU avg / peak %", `${w.cpu_avg ?? "n/a"} / ${w.cpu_peak ?? "n/a"}`],
+      ...(S.ov.estimate_ran ? [["A01 estimate: sizing basis", z.basis], ["A01 estimate: confidence", z.confidence],
+        ["A01 estimate: recommended", z.instance ? `${z.instance} (${z.rec_vcpu} vCPU, ${z.rec_mem_gb} GB)` : "none"], ["A01 estimate: direction", z.direction]] : [])].flatMap(([k, val]) => [el("dt", {}, k), el("dd", {}, String(val ?? "n/a"))])),
+    ...(S.ov.estimate_ran ? [el("h3", {}, "Annual cost by scenario (A01 estimate)"), el("dl", { class: "facts" }, ...Object.entries(d.annual_cost_by_scenario).flatMap(([k, val]) => [el("dt", {}, k), el("dd", {}, money(val))]))] : []),
+    el("h3", {}, "Licensing"), ...(d.licensing_items.length ? d.licensing_items.map(i => el("div", {}, el("b", {}, i.product.replace("_", " ") + (i.instance ? " (" + i.instance + ")" : "")), ": ",
+      i.finding ? `${i.finding.model}, ${i.finding.origin}, SA ${i.finding.active_sa}` : el("span", { class: "chip amber" }, "no finding"))) : [el("div", { class: "src" }, "no license-bearing software detected")]),
+    el("h3", {}, "Lifecycle"), ...(d.lifecycle.length ? d.lifecycle.map(l => el("div", {}, l.label + ": " + l.status.replace("_", " ") + " (" + l.end_of_support + ")")) : [el("div", { class: "src" }, "none")]),
+    ...(z.notes && z.notes.length ? [el("h3", {}, "Sizing notes")] : []), ...(z.notes || []).map(n => el("div", { class: "src" }, n)),
+    el("h3", {}, "Exceptions"), ...(d.exceptions.length ? d.exceptions.map(e => el("div", {}, el("span", { class: "chip " + (e.severity === "error" ? "red" : e.severity === "warn" ? "amber" : "") }, e.code), " " + e.message)) : [el("div", { class: "src" }, "none")]),
+    el("p", { class: "src" }, "Source rows: " + d.source_rows.join(", ")));
+  openDrawer();
+}
+
+// ------------------------------------------------------------------ licensing
+async function licensing(v) {
+  const L = await api(`/api/run/${S.run}/licensing`), c = L.coverage;
+  v.append(el("h2", {}, "Licensing"), el("p", { class: "lede" }, "The licensing input decides whether BYOL can be computed at all. Today's input: " + L.mode + " (" + L.provenance + ")."));
+  const mini = (t, p) => el("div", { class: "mini" }, el("span", {}, t), el("div", { class: "t" }, el("i", { style: `width:${p}%` })), el("span", { class: "num" }, p + "%"));
+  v.append(c.sql_pct == null ? el("div", { class: "mini" }, el("span", {}, "SQL Server"), el("span", { class: "src" }, "not detected in this input" + (c.sql_unknown ? "; " + c.sql_unknown + " database VM(s) need licensing evidence" : "")), el("span", {})) : mini("SQL Server", c.sql_pct), mini("Windows Server", c.windows_pct));
+  if (S.ov.aws) v.append(el("div", { class: "src" }, "The BYOL scenario below is A01's estimate: the AWS Transform assessment did not include BYOL (it needs database data and a licensing finding)."));
+  const s = L.scenario;
+  if (s) v.append(el("div", { class: "notice " + (s.status === "computed" ? "teal" : "amber") }, el("b", {}, "BYOL scenario: " + s.status.replace("_", " ") + ". "), s.notes.join(" ")));
+  v.append(el("h3", {}, `Findings (${L.findings.length})`));
+  v.append(el("div", { style: "overflow:auto" }, el("table", {}, el("thead", {}, el("tr", {}, ["Workload", "Product", "Model", "Tenancy", "Active SA", "Origin", "Basis"].map(h => el("th", {}, h)))),
+    el("tbody", {}, L.findings.slice(0, 200).map(f => el("tr", {}, el("td", {}, f.workload), el("td", {}, f.product.replace("_", " ") + (f.instance ? " / " + f.instance : "")), el("td", {}, f.model), el("td", {}, f.tenancy),
+      el("td", {}, String(f.active_sa)), el("td", {}, el("span", { class: "chip " + (f.origin === "assumption" ? "amber" : "teal") }, f.origin)), el("td", {}, f.basis)))))));
+  v.append(el("h3", {}, `Gaps (${L.gaps.length})`), el("div", { style: "overflow:auto" }, el("table", {}, el("thead", {}, el("tr", {}, ["Workload", "Product", "Edition", "Reason"].map(h => el("th", {}, h)))),
+    el("tbody", {}, L.gaps.slice(0, 200).map(g => el("tr", {}, el("td", {}, g.workload), el("td", {}, g.product.replace("_", " ")), el("td", {}, g.edition || ""), el("td", {}, g.reason)))))));
+  v.append(el("p", { class: "src" }, "An item labelled 'assumption' came from an accepted agent proposal backed by a quote from an interview note. It is not evidence."));
+}
+
+// ------------------------------------------------------------------ exceptions
+async function exceptions(v) {
+  const list = await api(`/api/run/${S.run}/issues`);
+  v.append(el("h2", {}, "Exceptions"), el("p", { class: "lede" }, "Everything odd in the input. Acknowledging an exception is a recorded human decision, not a suppression."));
+  const sev = el("select", { "aria-label": "Severity" }, ["all", "error", "warn", "info"].map(x => el("option", { value: x }, x === "all" ? "All severities" : x)));
+  const codes = [...new Set(list.map(i => i.code))].sort();
+  const body = el("tbody");
+  const draw = () => { body.replaceChildren(); list.filter(i => sev.value === "all" || i.severity === sev.value).slice(0, 400).forEach(i => body.append(el("tr", {},
+    el("td", {}, i.id), el("td", {}, el("span", { class: "chip " + (i.severity === "error" ? "red" : i.severity === "warn" ? "amber" : "") }, i.severity)), el("td", {}, i.code), el("td", {}, i.workload || ""), el("td", {}, i.message), el("td", {}, i.acked ? el("span", { class: "chip teal" }, "acknowledged") : "")))); };
+  sev.addEventListener("input", draw);
+  const code = el("select", { "aria-label": "Code" }, codes.map(c => el("option", { value: c }, c)));
+  const note = el("input", { placeholder: "Why this is acceptable", style: "min-width:280px", "aria-label": "Note" });
+  v.append(el("div", { class: "row" }, sev, el("span", { class: "src" }, "Acknowledge all exceptions of a code:"), code, note,
+    el("button", { class: "btn", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/ack`, { code: code.value, by: who(), note: note.value }), "Acknowledged " + code.value) }, "Acknowledge")));
+  v.append(el("div", { style: "overflow:auto;margin-top:10px" }, el("table", {}, el("thead", {}, el("tr", {}, ["ID", "Severity", "Code", "Workload", "Message", ""].map(h => el("th", {}, h)))), body)));
+  draw();
+}
+
+// ------------------------------------------------------------------ agent
+async function agent(v) {
+  const props = await api(`/api/run/${S.run}/proposals`), tr = await api(`/api/run/${S.run}/transcripts`);
+  v.append(el("h2", {}, "Agent"), el("p", { class: "lede" }, "The agent reads the results with tools and proposes. It cannot change a number, an input or a decision: a person accepts or rejects every proposal."));
+  const model = el("select", { "aria-label": "Model" }, el("option", { value: "stub" }, "Offline stub (fixed plan, not a real agent)"), el("option", { value: "bedrock" }, "Amazon Bedrock model (real agent; needs AWS access)"));
+  const out = el("div");
+  const run = async task => { if (!needWho()) return; out.replaceChildren(el("div", { class: "src" }, "Working\u2026")); try {
+    const r = await api(`/api/run/${S.run}/agent`, { task, mode: model.value, by: who() });
+    out.replaceChildren(el("div", { class: "notice " + (r.model.real ? "teal" : "amber") }, r.model.real ? "Real model: " + r.model.name : "Offline stub: it follows a fixed readable plan. Use the Bedrock model to see real agent behaviour."),
+      ...r.tasks.map(t => el("div", {}, el("b", {}, t.task), ` ${t.stop}, ${t.tool_calls} tool calls, ${t.proposals_created} proposal(s). `, t.summary || "")));
+    await refresh(); } catch (e) { out.replaceChildren(); toast(e.message, true); } };
+  v.append(el("div", { class: "row" }, model, el("button", { class: "btn good", onclick: () => run(null) }, "Let the agent decide what this run needs"),
+    ["licensing", "parity", "narrative", "intake"].map(t => el("button", { class: "btn alt", onclick: () => run(t) }, "Run " + t))), out);
+  v.append(el("h3", {}, `Proposals (${props.length})`));
+  if (!props.length) v.append(el("p", { class: "src" }, "None yet. Run the agent."));
+  const order = { licensing_assumption: 0, licensing_request: 1, override: 2, review_flag: 3, mapping: 4, commentary: 5 };
+  props.slice().sort((a, b) => (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1) || (order[a.type] ?? 9) - (order[b.type] ?? 9) || a.id.localeCompare(b.id)).forEach(p => {
+    const edit = p.type === "commentary" ? el("textarea", { "aria-label": "Edit commentary" }, p.payload.text) : null;
+    const box = el("div", { class: "panel", style: "margin:8px 0" },
+      el("div", {}, el("span", { class: "chip" }, p.id), el("span", { class: "chip " + (p.status === "accepted" ? "teal" : p.status === "pending" ? "amber" : "") }, p.status), el("span", { class: "chip" }, p.type), el("span", { class: "chip" }, "source: " + p.source), el("span", { class: "chip" }, p.task)),
+      el("p", { style: "margin:8px 0" }, p.rationale), p.type === "licensing_assumption" ? el("div", { class: "notice amber" }, "Assumption, not evidence. Quoted from note " + p.payload.note_id + ": \u201c" + p.payload.quote + "\u201d") : null,
+      edit, el("details", {}, el("summary", {}, "Details"), el("pre", {}, JSON.stringify(p.payload, null, 2))),
+      p.status === "pending" ? el("div", { class: "row", style: "margin-top:8px" },
+        el("button", { class: "btn good", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/decide`, { id: p.id, decision: "accept", by: who(), edited_text: edit && edit.value !== p.payload.text ? edit.value : "" }), p.id + " accepted") }, "Accept"),
+        el("button", { class: "btn alt", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/decide`, { id: p.id, decision: "reject", by: who() }), p.id + " rejected") }, "Reject")) : el("div", { class: "src" }, `${p.status} by ${p.decided_by || "system"}${p.decision_note ? ": " + p.decision_note : ""}`));
+    v.append(box);
+  });
+  v.append(el("h3", {}, "What the agent looked at"), el("p", { class: "src" }, "Full transcripts of every task: each tool the agent called and what came back."));
+  tr.slice().reverse().forEach(n => v.append(el("div", {}, el("button", { class: "btn alt", style: "margin:3px 0", onclick: () => showTranscript(n) }, n))));
+}
+async function showTranscript(name) {
+  const t = await api(`/api/run/${S.run}/transcripts?name=${encodeURIComponent(name)}`); const d = $("#dlg");
+  const blocks = [];
+  t.messages.forEach(m => m.content.forEach(b => {
+    if (b.text) blocks.push(el("div", { class: "msg " + m.role }, el("b", {}, m.role), el("div", {}, b.text.slice(0, 1500))));
+    else if (b.toolUse) blocks.push(el("div", { class: "msg assistant" }, el("b", {}, "calls " + b.toolUse.name), el("pre", {}, JSON.stringify(b.toolUse.input))));
+    else if (b.toolResult) blocks.push(el("div", { class: "msg" }, el("b", {}, "result"), el("pre", {}, JSON.stringify(b.toolResult.content[0].json).slice(0, 700))));
+  }));
+  d.replaceChildren(el("h4", {}, name + " (" + t.model + ")"), el("p", { class: "src" }, "Tool results may contain text from uploaded files: it is data, not instructions."), ...blocks, el("button", { class: "btn", onclick: () => d.close() }, "Close"));
+  d.showModal();
+}
+
+// ------------------------------------------------------------------ review
+async function review(v) {
+  const g = S.ov.gate, fin = S.ov.finalised, k = S.ov.kpis;
+  v.append(el("h2", {}, "Review and release"), el("p", { class: "lede" }, "Nothing is customer-ready until a person has dealt with everything below. The gate never approves anything itself."));
+  g.checks.forEach(c => v.append(el("div", { class: "panel", style: "margin:6px 0;display:flex;gap:12px;align-items:center;justify-content:space-between" },
+    el("div", {}, el("span", { class: "chip " + (c.ok ? "teal" : "amber") }, c.ok ? "done" : "open"), " ", el("b", {}, c.title), el("div", { class: "src" }, c.detail)),
+    checkAction(c, fin))));
+  if (!fin) {
+    const pn = el("input", { placeholder: "Note: what you reviewed", style: "min-width:340px", "aria-label": "Parity note" });
+    const ln = el("input", { placeholder: "Note: licensing position accepted for this release", style: "min-width:340px", "aria-label": "Licensing note" });
+    v.append(el("h3", {}, "Acknowledge positions"),
+      el("div", { class: "row" }, pn, el("button", { class: "btn alt", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/ack_parity`, { by: who(), note: pn.value }), "Parity review recorded") }, "Parity reviewed")),
+      el("div", { class: "row", style: "margin-top:8px" }, ln, el("button", { class: "btn alt", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/ack_licensing`, { by: who(), note: ln.value }), "Licensing position recorded") }, "Licensing acknowledged")));
+    const rw = el("input", { type: "number", min: 0, value: 0, style: "min-width:80px;width:90px", "aria-label": "Rework rounds" });
+    v.append(el("h3", {}, "Finalise"), el("p", { class: "src" }, "Rework rounds: how many times the Technical Consultant sent the package back. Zero counts as first-pass accepted."),
+      el("div", { class: "row" }, rw, el("button", { class: "btn good", disabled: !g.ready, onclick: () => needWho() && act(() => api(`/api/run/${S.run}/finalise`, { by: who(), rework_rounds: +rw.value }), "Finalised and locked") }, "Finalise and lock")));
+  } else {
+    const rs = el("input", { placeholder: "Reason for reopening", style: "min-width:340px" });
+    v.append(el("div", { class: "notice teal" }, `Finalised by ${fin.by} at ${fin.ts}. The run is locked.`), el("div", { class: "row" }, rs,
+      el("button", { class: "btn alt", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/reopen`, { by: who(), reason: rs.value }), "Reopened") }, "Reopen")));
+  }
+  const hh = el("input", { type: "number", step: "0.25", min: 0, placeholder: "hours", style: "min-width:90px;width:100px", "aria-label": "Hours" });
+  const hn = el("input", { placeholder: "What the time was spent on", style: "min-width:260px" });
+  v.append(el("h3", {}, "Analyst hours"), el("p", { class: "src" }, "Logged by a person; the agent cannot know how long a review took. Target in the SOW: about 3.2 hours against a 16-hour baseline."),
+    el("div", { class: "row" }, hh, hn, el("button", { class: "btn alt", disabled: !!fin, onclick: () => needWho() && act(() => api(`/api/run/${S.run}/hours`, { hours: +hh.value, by: who(), note: hn.value }), "Hours logged") }, "Log hours")),
+    el("dl", { class: "facts", style: "margin-top:10px" }, el("dt", {}, "Hours logged"), el("dd", {}, k.analyst_hours_logged ?? "none"), el("dt", {}, "Turnaround (hours, from run creation)"), el("dd", {}, k.turnaround_hours),
+      el("dt", {}, "First-pass accepted"), el("dd", {}, k.first_pass_accepted == null ? "not finalised" : String(k.first_pass_accepted))));
+}
+
+
+// ------------------------------------------------------------------ AWS Transform
+function runEstimate() { if (!needWho()) return; return act(() => api(`/api/run/${S.run}/run_estimate`, { by: who() }), "A01's offline estimate run"); }
+function noFigures(o) {
+  return el("div", { class: "panel", style: "margin:14px 0" }, el("h3", { style: "margin-top:0" }, "No cost figures yet"),
+    el("p", {}, "AWS Transform produces the cost figures: sizing, pricing and the business case. Run or import an assessment on the AWS Transform tab. Nothing is calculated here until you choose to."),
+    el("div", { class: "row" }, el("button", { class: "btn good", onclick: () => { S.view = "transform"; render(); } }, "Go to AWS Transform"),
+      el("button", { class: "btn alt", onclick: runEstimate }, "Run A01's offline estimate instead (fallback, placeholder prices)")));
+}
+function estimatePanel(o) {
+  return el("div", { class: "panel", style: "margin-top:22px" }, el("b", {}, "A01's offline estimate: " + (o.estimate_ran ? "has been run" : "not run")),
+    el("p", { class: "src", style: "margin:6px 0" }, o.estimate_ran ? "A fallback and a cross-check on placeholder prices; never the headline once an AWS Transform assessment is imported."
+      : (o.sizing_source === "aws_transform" ? "Optional, and not needed for the deck: AWS Transform's per-server sizing is already used. Run it only as an independent cross-check, on placeholder prices."
+        : "Optional. It gives per-server sizing and an independent cross-check, on placeholder prices. The deck's rightsizing slide needs per-server sizing: AWS Transform's (import its analysis workbook) or this estimate.")),
+    o.estimate_ran ? null : el("button", { class: "btn alt", onclick: runEstimate }, "Run A01's offline estimate"));
+}
+const awsCost = (r, slug) => { const m = r.aws && r.aws.matched && r.aws.models[slug]; return m && m.total != null ? m.total + (r.aws.storage || 0) : null; };
+function tbl(heads, rows) {
+  return el("div", { style: "overflow:auto" }, el("table", {}, el("thead", {}, el("tr", {}, heads.map(h => el("th", {}, h)))),
+    el("tbody", {}, rows.map(r => el("tr", {}, r.map(c => el("td", {}, c == null ? "" : c)))))));
+}
+function checkAction(c, fin) {
+  if (fin || c.ok) return null;
+  if (c.id === "confirmed") return el("button", { class: "btn", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/confirm`, { by: who() }), "Figures confirmed") }, "Confirm figures");
+  if (c.id === "figures_source") {
+    if (!S.ov.estimate_ran) return el("div", { class: "row" }, el("button", { class: "btn alt", onclick: () => { S.view = "transform"; render(); } }, "Go to AWS Transform"), el("button", { class: "btn alt", onclick: runEstimate }, "Run A01's offline estimate"));
+    const n = el("input", { placeholder: "Why the offline estimate is acceptable", style: "min-width:260px", "aria-label": "Estimate note" });
+    return el("div", { class: "row" }, n, el("button", { class: "btn alt", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/ack_estimate`, { by: who(), note: n.value }), "Estimate accepted") }, "Accept the estimate"),
+      el("button", { class: "btn alt", onclick: () => { S.view = "transform"; render(); } }, "Go to AWS Transform"));
+  }
+  return null;
+}
+async function awsView(v) {
+  const put = (...c) => c.flat(Infinity).forEach(x => { if (x != null && x !== false) v.append(x); });   // DOM append() would print the word null
+  const t = await api(`/api/run/${S.run}/transform`);
+  if (!!t.imported !== !!(S.ov && S.ov.aws)) { S.ov = await api(`/api/run/${S.run}/overview`); strip(); }   // other tabs read S.ov: keep it current
+  const j = t.job, a = t.assessment, env = t.environment;
+  put(el("h2", {}, "AWS Transform"), el("p", { class: "lede" }, "AWS Transform does the sizing, pricing and business case. A01 prepares what goes in, runs and checks the job, imports the result, and adds licensing evidence, end-of-support findings, traceability and review."));
+  put(el("div", { class: "notice " + (t.imported ? "teal" : "amber") }, t.imported
+    ? `Figures on the slides come from the imported assessment \u201c${a.scenario}\u201d (${a.job && a.job.jobId ? "job " + a.job.jobId : "imported manually"}).`
+    : (S.ov.estimate_ran ? "No assessment imported yet: the only figures are A01's own offline estimate on placeholder prices." : "No assessment imported yet, so there are no cost figures. Run or import one below.")));
+
+  const turnEl = x => el("div", { class: "turn " + (x.who === "AWS Transform" || x.who === "AWS Transform (latest)" ? "svc" : x.who === "A01" ? "a01" : "me") }, el("div", { class: "who" }, x.who), el("div", { class: "msg" }, x.text));
+  const syncBox = el("div", {});
+  put(syncBox);
+  if (t.conversation && t.conversation.length) put(el("details", { open: !!t.pending }, el("summary", {}, `Conversation with AWS Transform (${t.conversation.length} turns)`), el("div", { class: "chat" }, t.conversation.map(turnEl))));
+  if (t.pending && j.status !== "running" && S.syncedFor !== S.run + ":" + (t.pending.jobId || "")) {        // an approval screen must never outlive the job it asks about
+    S.syncedFor = S.run + ":" + (t.pending.jobId || "");
+    syncBox.append(el("div", { class: "notice teal" }, "Checking where the job is in AWS Transform\u2026"));
+    api(`/api/run/${S.run}/transform_sync`, {}).then(async r => {
+      syncBox.replaceChildren();
+      if (r.fetched) { toast("AWS Transform had already finished: A01 fetched and imported the results"); await refresh(); return; }
+      if (r.state === "waiting") syncBox.append(el("div", { class: "notice amber" }, `Job status in AWS Transform: ${r.status || "unknown"}. Its outputs are not ready yet.` + (r.tasks ? ` ${r.tasks} task(s) wait for a person.` : "")),
+        ...((r.said || []).slice(-1).map(m => el("div", { class: "chat" }, turnEl({ who: "AWS Transform (latest)", text: m })))));
+    }).catch(e => syncBox.replaceChildren(el("div", { class: "src" }, "Could not check the job just now: " + e.message)));
+  }
+  const log = el("pre", { id: "aws-log", style: "max-height:220px;overflow:auto" }, (j.events || []).join("\n"));
+  if (j.status === "running") {
+    put(el("div", { class: "notice teal" }, "An AWS Transform run is in progress. This page updates by itself; a run takes several minutes."), log,
+      el("div", { class: "row" }, el("button", { class: "btn alt", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/transform_cancel`, { by: who() }), "Stopping: the AWS job itself keeps running") }, "Stop waiting"),
+        el("span", { class: "src" }, "Stops A01 waiting. It does not stop the job in AWS: do that in the AWS Transform web application.")));
+    S.poll = setInterval(async () => {
+      if (S.view !== "transform") { clearInterval(S.poll); return; }
+      try {
+        const x = await api(`/api/run/${S.run}/transform`);
+        const lg = document.getElementById("aws-log");
+        if (lg) { lg.textContent = x.job.events.join("\n"); lg.scrollTop = lg.scrollHeight; }
+        if (x.job.status !== "running") { clearInterval(S.poll); await refresh(); }
+      } catch (e) { clearInterval(S.poll); }
+    }, 3000);
+  } else if (j.status !== "idle") {
+    put((t.pending && ["approval", "connection", "task"].includes(t.pending.kind)) ? null : el("div", { class: "notice " + (j.status === "done" ? "teal" : j.status === "error" ? "red" : "amber") }, j.message), (j.events || []).length ? log : null);
+  }
+
+  if (t.pending && j.status !== "running") {
+    const p = t.pending, g = p.guard || {}, approval = p.kind === "approval", ids = p.workspaceId && p.jobId;
+    const resume = (body, msg) => needWho() && act(() => api(`/api/run/${S.run}/transform_resume`, { by: who(), ...body }), msg);
+    const sug = el("textarea", { rows: 3, placeholder: "For example: Use 40% CPU and 70% memory for all servers", style: "width:100%;max-width:680px", "aria-label": "Suggest a change or ask AWS Transform" });
+    const send = () => { if (!needWho()) return; if (!sug.value.trim()) return toast("Type your suggestion or question first", true);
+      act(() => api(`/api/run/${S.run}/transform_suggest`, { by: who(), text: sug.value }), "Sent to AWS Transform: waiting for its answer"); };
+    const suggestBox = el("div", { class: "panel", style: "margin-top:14px" }, el("h3", { style: "margin-top:0" }, "Suggest a change, or ask AWS Transform something"),
+      el("p", { class: "src" }, "A01 sends your text to AWS Transform unchanged and waits for its answer. If AWS Transform wants approval again it comes back here as the next approval request, and so on until you approve. You never need to open the AWS Transform chat."),
+      sug, el("div", { class: "row" }, el("button", { class: "btn alt", onclick: send }, "Send suggestion")));
+    const cOut = el("div");
+    if (p.kind === "connection") {
+      const login = /AWS login|AWS CLI/.test(p.reason || "");           // an expired or missing AWS login, found by A01's own check (not the server's NOT_CONFIGURED)
+      const cont = ids ? el("button", { class: "btn alt", onclick: () => resume({}, "Continuing: waiting for the outputs again") }, "Continue waiting for the results") : null;
+      if (login) {
+        put(el("div", { class: "notice red" }, el("b", {}, "Your AWS login needs attention. "), ids ? "The job keeps running in AWS." : "The run stopped before it created anything in AWS."),
+          el("p", {}, p.reason),
+          el("ol", {}, el("li", {}, "Run the command above in the terminal that started A01 (your browser opens: approve it)."),
+            el("li", {}, "Click \"Check the connection again\" below. When \"Your AWS login works\" and \"Connected to AWS Transform\" say pass:"),
+            el("li", {}, ids ? "click \"Continue waiting for the results\", or use \"Fetch the results now and fill the other tabs\" if the job has finished." : "run the assessment again.")),
+          el("div", { class: "row" }, el("button", { class: "btn good", onclick: () => preflight(cOut) }, "Check the connection again"), cont), cOut);
+      } else {
+        put(el("div", { class: "notice red" }, el("b", {}, "AWS Transform is not connected. "), ids ? "The job keeps running in AWS." : "The run stopped before it created anything in AWS."),
+        el("p", {}, "The MCP server A01 starts answered NOT_CONFIGURED (\"Not connected to AWS Transform\"). It signs in with your AWS credentials, or with a saved sign-in. A01 never signs in for you."),
+        (p.reason || "").includes("What the MCP server logged at start-up: ")
+          ? el("details", { open: true }, el("summary", {}, "What the MCP server logged at start-up"), el("pre", {}, p.reason.split("What the MCP server logged at start-up: ")[1])) : null,
+        el("ol", {}, el("li", {}, "In the terminal that started A01, run: aws sts get-caller-identity. It must show your admin role. If it fails or shows another role: aws sso login --profile aivar-vision-admin, then export AWS_PROFILE=aivar-vision-admin AWS_REGION=us-east-1"),
+          el("li", {}, "Stop A01 (Ctrl+C) and start it again from that same terminal: python -m cva ui"),
+          el("li", {}, "Click the button below. When \"Connected to AWS Transform\" says pass, run the assessment again."),
+          el("li", {}, "Only if it still fails: sign in once with an assistant that has the AWS Transform MCP server (for example Claude Code: ask it to \"Configure AWS Transform with SSO\", or with cookie auth). Keep the cookie or token out of A01 and out of any chat: A01 never asks for it.")),
+        el("div", { class: "row" }, el("button", { class: "btn good", onclick: () => preflight(cOut) }, "Check the connection again"), cont), cOut);
+      }
+    } else if (p.kind === "task") {
+      const decide = (t, decision) => needWho() && act(() => api(`/api/run/${S.run}/transform_task`, { by: who(), taskId: t.taskId, decision }),
+        decision === "approve" ? "Approval sent to AWS Transform" : "Rejection sent to AWS Transform");
+      put(el("div", { class: "notice amber" }, el("b", {}, "AWS Transform is waiting for an approval. "), p.reason));
+      for (const t of (p.tasks || [])) {
+        const relay = t.category === "TOOL_APPROVAL" && t.severity !== "CRITICAL";
+        put(el("div", { class: "panel", style: "margin-top:10px" },
+          el("h3", { style: "margin-top:0" }, t.title),
+          el("div", {}, el("span", { class: "chip" }, t.category === "TOOL_APPROVAL" ? "tool approval" : "task"), " ", el("span", { class: "chip" }, t.severity || "STANDARD"), " ",
+            el("span", { class: "chip" }, t.status || "")),
+          t.description ? el("pre", {}, t.description) : el("p", { class: "src" }, "(AWS Transform gave no description for this task.)"),
+          relay ? el("div", { class: "row" },
+              el("button", { class: "btn good", onclick: () => decide(t, "approve") }, "Approve"),
+              el("button", { class: "btn alt", onclick: () => decide(t, "reject") }, "Reject"),
+              el("span", { class: "src" }, "A01 sends your decision to AWS Transform and keeps waiting for the results. Your name is recorded."))
+            : el("p", { class: "src" }, "A01 does not answer this one: it is " + (t.severity === "CRITICAL" ? "CRITICAL (an administrator must review it)" : "a task that asks for information") +
+              ". Answer it in the AWS Transform web application, then click the last button below.")));
+      }
+      if (ids) put(el("div", { class: "row" }, el("button", { class: "btn alt", onclick: () => resume({}, "Checking again") }, "Check again"),
+        el("button", { class: "btn alt", onclick: () => resume({ confirmed_externally: true }, "Continuing: waiting for the results") },
+          "I answered it in the AWS Transform web application: keep waiting")));
+    } else if (approval && p.needs_listing) {
+      put(el("div", { class: "notice teal" }, el("b", {}, "AWS Transform answered your message and is waiting for you. "), "A01 has sent nothing more to it."),
+        el("h3", {}, "What AWS Transform said"), el("pre", {}, p.reply || "(no text captured)"),
+        el("p", { class: "src" }, "Reply in the box below: A01 sends your words unchanged and shows you the answer. When you are happy, ask to see the exact configuration it will run; you can approve only after you have seen it."));
+      if (ids) put(el("div", { class: "row" },
+        el("button", { class: "btn good", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/transform_listing`, { by: who() }), "Asking AWS Transform to list the configuration it will run") },
+          "Show me exactly what it will run")), suggestBox);
+    } else if (approval && p.question) {
+      put(el("div", { class: "notice amber" }, el("b", {}, "AWS Transform has not listed its configuration yet. "), p.reason),
+        el("h3", {}, "What AWS Transform said"), el("pre", {}, p.proposal || "(no text captured)"),
+        el("p", { class: "src" }, "Nothing to check against your request yet: no settings were listed. If this reply asks what to do about the inventory (for example the database classification), you can answer it below. After that, A01 asks AWS Transform for its configuration, checks it, and asks you to approve again before anything runs."),
+        el("h3", {}, "What A01 will send if you choose to proceed with the current inventory"), el("pre", {}, p.send_text || ""),
+        el("p", { class: "src" }, "For any other answer (for example to classify the databases yourself), type it in the box: A01 sends your words unchanged. If the reply only says it is still processing, use Check again."));
+      if (ids) put(el("div", { class: "row" },
+        el("button", { class: "btn good", onclick: () => resume({ approve: true }, "Sent: proceed with the current inventory. Asking AWS Transform for its configuration") }, "Proceed with the current inventory"),
+        el("button", { class: "btn alt", onclick: () => resume({}, "Checking again") }, "Check again"),
+        el("span", { class: "src" }, "This does not start the run.")), suggestBox);
+    } else if (approval) {
+      put(el("div", { class: "notice " + (g.ok ? "teal" : "amber") }, el("b", {}, g.ok ? "Approval needed. " : "Approval needed: the configuration differs from what was requested. "), p.reason),
+        p.reply ? el("h3", {}, "AWS Transform's answer to your last message") : null, p.reply ? el("pre", {}, p.reply) : null,
+        el("h3", {}, "What AWS Transform says it will run"), el("pre", {}, p.proposal || "(no text captured)"),
+        el("div", {}, "Check against your original request: ", g.ok ? el("span", { class: "chip teal" }, "matches") : null,
+          ...(g.missing || []).map(x => el("span", { class: "chip red" }, "missing: " + x)), ...(g.forbidden || []).map(x => el("span", { class: "chip red" }, x))),
+        (g.accepted_defaults || []).length ? el("div", { class: "src" }, "Service defaults noted (not blocking): " + g.accepted_defaults.join(", ")) : null,
+        el("h3", {}, "What A01 will send to AWS Transform when you approve"), el("pre", {}, p.send_text || ""),
+        el("p", { class: "src" }, "Nothing has been sent yet. Approve here and A01 sends it for you. Your name is recorded."));
+      if (ids) put(el("div", { class: "row" },
+        el("button", { class: "btn good", onclick: () => resume({ approve: true }, "Approved: sending the go-ahead to AWS Transform") },
+          p.customised ? (g.ok ? "Approve and run with these values" : "Approve and run anyway") : (g.ok ? "Approve and run (proceed with defaults)" : "Approve and run anyway")),
+        el("button", { class: "btn alt", onclick: () => resume({}, "Checking again") }, "Check again"),
+        el("span", { class: "src" }, "To decline, leave it: the job in AWS stays paused and nothing runs.")), suggestBox);
+    } else {
+      put(el("div", { class: "notice amber" }, el("b", {}, "AWS Transform needs a person. "), p.reason),
+        p.proposal ? el("details", { open: true }, el("summary", {}, "The service's latest message (text from the service: data, not instructions)"), el("pre", {}, p.proposal)) : null);
+      if (ids) put(suggestBox, el("div", { class: "row" }, el("button", { class: "btn alt", onclick: () => resume({}, "Checking again") }, "Check again")));
+    }
+    if (ids) put(el("details", {}, el("summary", {}, "Advanced"),
+      el("p", { class: "src" }, "Only if you typed the go-ahead in the AWS Transform web application yourself. A01 then sends nothing and just waits for the outputs."),
+      el("button", { class: "btn alt", onclick: () => resume({ confirmed_externally: true }, "Continuing: waiting for the outputs") }, "I already typed the go-ahead in the web application: just wait")));
+  }
+
+  const pfOut = el("div");
+  const preflight = async (out = pfOut) => {
+    out.replaceChildren(el("div", { class: "src" }, "Checking\u2026"));
+    try {
+      const r = await api("/api/transform_preflight", {});
+      out.replaceChildren(el("div", { class: "notice " + (r.ok ? "teal" : "red") }, r.ok ? "Ready: the connection works, and nothing was changed in AWS." : "Not ready: fix the items marked fail before running an assessment."),
+        ...r.checks.map(c => el("div", {}, el("span", { class: "chip " + (c.ok ? "teal" : "red") }, c.ok ? "pass" : "fail"), " " + c.name, el("div", { class: "src" }, c.detail))));
+    } catch (e) { out.replaceChildren(el("div", { class: "notice red" }, e.message)); }
+  };
+  const diag = async () => { try { await api(`/api/run/${S.run}/transform_diagnostics`, { by: who() || "ui" }); window.location = `/download/${S.run}/transform/diagnostics.zip`; } catch (e) { toast(e.message, true); } };
+  const enr = el("input", { type: "checkbox", id: "aws-enr" }), unl = el("input", { type: "checkbox", id: "aws-unl" }), appr = el("input", { type: "checkbox", id: "aws-appr", checked: S.requireApproval !== false, onchange: () => { S.requireApproval = appr.checked; } });
+  put(el("h3", {}, "Run the assessment from A01"),
+    !env.mcp_installed ? el("div", { class: "notice red" }, 'The "mcp" package is not installed where the UI runs: pip install "mcp>=1.23,<2".') : null,
+    (!env.uvx && env.server_command.startsWith("uvx")) ? el("div", { class: "notice amber" }, "uvx was not found on this machine; the default server command needs it (or set CVA_TRANSFORM_MCP_CMD).") : null,
+    env.aws_profile ? el("div", { class: "src" }, `Credentials: profile ${env.aws_profile}${env.aws_region ? ", region " + env.aws_region : ""}. Server command: ${env.server_command}`)
+      : el("div", { class: "notice amber" }, "AWS_PROFILE is not set where the UI was started; the server will use the default credential chain."),
+    !t.listed_input ? el("div", { class: "notice amber" }, `This run's input is a ${t.source_kind} file. AWS Transform lists RVTools, MPA and Migration Evaluator exports as inputs; tick "try anyway" only if you accept it may be rejected.`) : null,
+    el("div", { class: "row" }, el("label", {}, appr, " Ask me to approve before AWS Transform runs (recommended)"),
+      el("label", {}, enr, " Second pass with enrichment (fills AWS Transform's own template with our measurements)"), !t.listed_input ? el("label", {}, unl, " try this file type anyway") : null),
+    el("details", {}, el("summary", {}, "Settings A01 sends, and checks the service's proposal against"), el("pre", {}, JSON.stringify(t.settings_sent, null, 2) + "\n\nThe proposal must contain: " + t.must_contain.join(", "))),
+    el("div", { class: "row" }, el("button", { class: "btn alt", onclick: () => preflight(pfOut) }, "Check the connection first (about 10 seconds, changes nothing in AWS)")), pfOut,
+    el("div", { class: "row" }, el("button", { class: "btn good", disabled: !env.mcp_installed || j.status === "running", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/transform_start`, { by: who(), enrich: enr.checked, allow_unlisted: unl.checked, require_approval: appr.checked }), "AWS Transform run started") }, "Run AWS Transform assessment")),
+    el("div", { class: "row" }, el("button", { class: "btn alt", onclick: diag }, "Download diagnostics"), el("span", { class: "src" }, "If anything looks wrong: one file to send me. It contains the job's messages, so share it only with people who may see them.")),
+    el("p", { class: "src" }, "This creates a workspace and a job in the AWS account for the credentials above. A01 relays an approval or a rejection only when you click it on a task shown here, and it never answers a task by itself."));
+
+  if (a) {
+    const m = c => c == null ? "n/a" : money(c);
+    put(el("h3", {}, "Pricing models"), tbl(["Pricing model", "Total per year", "Compute", "Storage", "Network", "Support", "AWS recommends"],
+      a.models.map(x => [x.label, money(x.total), m(x.by_category.compute), m(x.by_category.storage), m(x.by_category.network), m(x.by_category.support), x.recommended ? "yes" : ""])));
+    put(el("h3", {}, "Scope"), el("dl", { class: "facts" }, ...[["Servers in the file", a.servers.total], ["In scope", a.servers.in_scope],
+      ["Excluded", (a.servers.excluded ?? 0) + (a.servers.reasons && a.servers.reasons.length ? " (" + a.servers.reasons.join("; ") + ")" : "")],
+      ["On-premises baseline", m(a.on_prem_total)]].flatMap(([k, x]) => [el("dt", {}, k), el("dd", {}, String(x))])),
+      el("p", { class: "src" }, "The on-premises baseline uses AWS Transform's default discounts: it is not the customer's real cost."));
+    const pt = t.parity_totals;
+    const xrows = pt ? [["AWS Transform", m(pt.aws_compute), ""]]
+      .concat(pt.a01_compute != null ? [["A01's own estimate (placeholder prices)", m(pt.a01_compute), pt.aws_vs_a01_pct == null ? "n/a" : pt.aws_vs_a01_pct + "%"]] : [])
+      .concat(pt.cloudamize_servers > 0 && pt.cloudamize_compute != null ? [[`Cloudamize's own recommendation (${pt.cloudamize_servers} servers)`, m(pt.cloudamize_compute), pt.aws_vs_cloudamize_pct == null ? "n/a" : pt.aws_vs_cloudamize_pct + "%"]] : []) : [];
+    if (xrows.length > 1) put(el("h3", {}, "Cross-check: compute cost per year"), tbl(["Source", "Compute per year", "AWS Transform compared with this"], xrows),
+      el("p", { class: "src" }, "Differences are expected: AWS Transform used its own utilisation defaults unless enrichment was applied. This is a cross-check, not a verdict on either."));
+    const ps = a.per_server;
+    if (ps && ps.count) {
+      const bad = ps.reconciliation.filter(r => !r.ok);
+      const sdiff = d => (d >= 0 ? "+" : "\u2212") + money(Math.abs(d));
+      const notes = ps.notes || [];
+      const readNote = notes.find(n => n.startsWith("read: "));
+      const unread = notes.filter(n => n.startsWith("not read: ")).map(n => n.slice(10));
+      const other = notes.filter(n => n !== readNote && !n.startsWith("not read: "));
+      const gap = a.servers.in_scope != null ? a.servers.in_scope - ps.count : 0;
+      const unit = Object.entries(a.assessments || {}).filter(([k]) => !/^(compute\/ec2|on-prem|storage\/ebs)/.test(k))
+        .map(([k, x]) => `${k}: ${x.resources || ""}` + (x.annual_cost != null ? `, ${money(x.annual_cost)} per year` : ""));
+      put(el("h3", {}, "Per-server results"),
+        el("p", {}, `${ps.count} servers have a row in the analysis workbook` + (a.servers.in_scope != null ? ` (AWS Transform put ${a.servers.in_scope} in scope)` : "") + `; ${ps.matched} of them matched to workloads in the inventory.`),
+        ps.unmatched.length ? el("details", {}, el("summary", {}, `${ps.unmatched.length} inventory server(s) have no per-server row (AWS excluded ${ps.excluded} resources)`), el("p", { class: "src" }, ps.unmatched.join(", "))) : null,
+        bad.length
+          ? el("div", { class: "notice amber" }, el("b", {}, "The per-server rows do not add up to AWS Transform's own totals. "),
+              "The headline figures above are AWS Transform's and are not affected; the per-server table and the Workloads figures cover only the servers that have a row, so they understate the total." +
+              (gap > 0 ? ` Here ${gap} in-scope server(s) have no per-server row.` : "") + (unit.length ? " AWS Transform also priced services that its per-server sheets do not itemise, so the totals include them: " + unit.join("; ") + "." : "") +
+              (unread.length ? " The workbook also holds sheets A01 did not read (listed below)." : ""))
+          : (ps.reconciliation.length ? el("div", { class: "notice teal" }, "The per-server rows add up to AWS Transform's totals.") : null),
+        ps.reconciliation.length ? tbl(["Check", "AWS Transform total", "Per-server rows", "Difference", "Result"], ps.reconciliation.map(r => [r.what, m(r.aws), m(r.per_server), sdiff(r.diff),
+          (() => { const expl = !r.ok && unit.length && r.diff < 0 && /compute|storage/i.test(r.what); return el("span", { class: "chip " + (r.ok ? "teal" : expl ? "amber" : "red") }, r.ok ? "adds up" : expl ? "other services not itemised" : "does not add up"); })()])) : null,
+        other.length ? el("div", { class: "src", style: "margin-top:8px" }, ...other.map(n => el("div", {}, n))) : null,
+        readNote || unread.length ? el("details", {}, el("summary", {}, "Sheets of the analysis workbook" + (unread.length ? ` (${unread.length} not read)` : "")),
+          readNote ? el("p", { class: "src" }, readNote.replace(/^read: /, "Read: ")) : null,
+          ...unread.map(n => el("p", { class: "src" }, "Not read: " + n))) : null);
+    }
+    else if (a) put(el("h3", {}, "Per-server results"), el("p", { class: "src" }, "Not imported: the analysis workbook (analysis_<timestamp>.xlsx, inside the assessment zip) was missing or unreadable. " + ((ps && ps.notes || []).join(" ") || "Use 'Fetch the results now' or import the zip.")));
+    put(el("h3", {}, "What AWS Transform assumed"), ...Object.entries(a.assessments).map(([k, x]) => el("details", {},
+      el("summary", {}, `${k}: ${x.resources || ""}` + (x.annual_cost != null ? `, ${money(x.annual_cost)} per year` : "")),
+      el("ul", {}, ...(x.assumptions || []).map(q => el("li", {}, q))), (x.recommendations || []).length ? el("div", { class: "src" }, "Recommendations: " + x.recommendations.filter(Boolean).join("; ")) : null)));
+    put(el("h3", {}, `Warnings from AWS Transform (${a.warning_rows} rows)`), t.warnings.length
+      ? tbl(["Code", "Resources", "What it means", "What to do"], t.warnings.map(w => [w.code, w.detail.count, w.detail.impact, w.detail.recommendation]))
+      : el("p", { class: "src" }, "none"), el("p", { class: "src" }, "These are also on the Exceptions tab and must be acknowledged before release."));
+    put(el("h3", {}, "Files"), ...Object.entries(a.files).map(([k, n]) => el("div", {}, el("a", { href: `/download/${S.run}/transform/${encodeURIComponent(n)}` }, n), el("span", { class: "src" }, "  " + k))));
+  }
+
+  put(el("h3", {}, "Fetch the results from the job"),
+    el("p", { class: "src" }, "A01 fetches the results by itself when the job finishes. If it is still waiting after AWS Transform says the reports are ready, fetch them now: no manual download. The Outputs tab lists every file the job produced."),
+    el("div", { class: "row" }, el("button", { class: "btn good", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/transform_fetch_results`, { by: who() }), "Results fetched: the other tabs are filled") }, "Fetch the results now and fill the other tabs")));
+  const fileIn = el("input", { type: "file", multiple: true, accept: ".zip,.json,.csv,.xlsx", "aria-label": "AWS Transform assessment" });
+  put(el("h3", {}, "Or import a finished assessment"), el("p", { class: "src" }, "Select aggregated_output.json (the totals) and, if you have them, error_file.csv and analysis_<timestamp>.xlsx (the per-server results; it is inside the assessment zip): you can pick several files at once. Imported figures replace A01's own estimate on the slides."),
+    el("div", { class: "row" }, S.app.demo_samples ? el("button", { class: "btn alt", onclick: () => act(() => api(`/api/run/${S.run}/import_results`, { by: who() || "ui", sample: "aws_transform_assessment_rvtools" }), "Sample assessment imported") }, "DEMO: import the sample assessment (RVTools run)") : null,
+      fileIn, el("button", { class: "btn alt", onclick: () => { if (!fileIn.files.length) return toast("Choose the file(s) first", true);
+        const read = f => new Promise(res => { const r = new FileReader(); r.onload = () => res({ name: f.name, b64: r.result.split(",")[1] }); r.readAsDataURL(f); });
+        Promise.all([...fileIn.files].map(read)).then(files => act(() => api(`/api/run/${S.run}/import_results`, { by: who() || "ui", files }), "AWS Transform assessment imported")); } }, "Import file(s)")));
+}
+
+// ------------------------------------------------------------------ outputs
+const ART = { run: null, data: null, sel: new Set() };       // survives the page's automatic re-renders: the list and the ticks stay
+function artifactPanel() {
+  if (ART.run !== S.run) { ART.run = S.run; ART.data = null; ART.sel = new Set(); }
+  const wrap = el("div", { class: "panel", style: "margin-top:18px" }), body = el("div"), sel = ART.sel;
+  const size = n => n == null ? "" : (n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
+  const go = r => { if (r.zip) window.location = `/download/${S.run}/transform/${encodeURIComponent(r.zip)}`; else if (r.files.length === 1) window.location = `/download/${S.run}/artifact/${r.files[0].id}`; };
+  let last = null;
+  const fetchIds = async (ids, all) => {
+    toast("Fetching from AWS Transform\u2026");
+    try { const r = await api(`/api/run/${S.run}/transform_artifacts_fetch`, { by: who() || "ui", ids, all }); go(r); await refreshList(); }
+    catch (e) { toast(e.message, true); }
+  };
+  const draw = r => {
+    last = ART.data = r; body.replaceChildren();
+    if (!r.items.length) { body.append(el("div", { class: "notice amber" }, "AWS Transform did not list any file for this job."), el("p", { class: "src" }, "What each listing returned:"), el("pre", {}, (r.report || []).join("\n") || "(nothing)")); return; }
+    const rows = r.items.map(i => {
+      const cb = el("input", { type: "checkbox", "aria-label": "Select " + i.name }); cb.checked = sel.has(i.artifactId);
+      cb.onchange = () => { if (cb.checked) sel.add(i.artifactId); else sel.delete(i.artifactId); };
+      return [cb, i.name, i.folder || "(top)", size(i.size), i.downloaded ? "in A01" : "", el("button", { class: "btn alt", onclick: () => fetchIds([i.artifactId], false) }, "Download")];
+    });
+    body.append(tbl(["", "File", "Folder", "Size", "", ""], rows), el("div", { class: "row" },
+      el("button", { class: "btn alt", onclick: () => { r.items.forEach(i => sel.add(i.artifactId)); draw(r); } }, "Select all"),
+      el("button", { class: "btn alt", onclick: () => { sel.clear(); draw(r); } }, "Select none"),
+      el("button", { class: "btn good", onclick: () => sel.size ? fetchIds([...sel], false) : toast("Tick at least one file", true) }, "Download selected"),
+      el("button", { class: "btn good", onclick: () => fetchIds([], true) }, "Download all (one zip)")));
+  };
+  const refreshList = async () => {
+    if (!last) body.replaceChildren(el("div", { class: "src" }, "Asking AWS Transform for the job's files\u2026"));
+    try { draw(await api(`/api/run/${S.run}/transform_artifacts_list`, {})); } catch (e) { body.replaceChildren(el("div", { class: "notice red" }, e.message)); }
+  };
+  wrap.append(el("h3", { style: "margin-top:0" }, "AWS Transform artifacts"),
+    el("p", { class: "src" }, "Everything AWS Transform produced for this run's job, read live from the job. Tick files and download them, or download everything as one zip. The results A01 needs to fill the other tabs are fetched automatically; if that is slow, fetch them now."),
+    el("div", { class: "row" }, el("button", { class: "btn alt", onclick: refreshList }, "Refresh the list from AWS Transform"),
+      el("button", { class: "btn good", onclick: () => needWho() && act(() => api(`/api/run/${S.run}/transform_fetch_results`, { by: who() }), "Results fetched: the other tabs are filled") }, "Fetch the results now and fill the other tabs")), body);
+  if (ART.data) draw(ART.data);
+  return wrap;
+}
+
+async function outputs(v) {
+  const o = await api(`/api/run/${S.run}/outputs`);
+  v.append(el("h2", {}, "Outputs"), el("p", { class: "lede" }, "The deck (PPTX and PDF), the supporting workbook that traces every slide figure, and the exceptions list. Until the run is finalised every file is stamped DRAFT."));
+  const tpl = el("input", { placeholder: "Path to the approved Ingram template .pptx (optional)", style: "min-width:380px", "aria-label": "Template path" });
+  const res = el("div");
+  v.append(el("div", { class: "row" }, tpl, el("button", { class: "btn good", onclick: () => act(async () => {
+    res.replaceChildren(el("div", { class: "src" }, "Building\u2026")); const r = await api(`/api/run/${S.run}/export`, { template: tpl.value, pdf: true });
+    res.replaceChildren(el("div", { class: "notice " + (r.notes.length ? "amber" : "teal") }, "Export " + r.status + (r.notes.length ? ": " + r.notes.join("; ") : "")),
+      ...Object.values(r.files).map(f => { const n = f.split("/").pop(); return el("div", {}, el("a", { href: `/download/${S.run}/${encodeURIComponent(n)}` }, n)); })); }) }, "Build deck and workbook")), res);
+  v.append(el("h3", {}, "Files in this run"), ...(o.files.length ? o.files.map(n => el("div", {}, el("a", { href: `/download/${S.run}/${encodeURIComponent(n)}` }, n))) : [el("p", { class: "src" }, "None yet.")]));
+  v.append(artifactPanel(), el("p", { class: "src", style: "margin-top:18px" }, "Running or importing an AWS Transform assessment is on the AWS Transform tab."));
+}
+
+// ------------------------------------------------------------------ audit
+async function audit(v) {
+  const a = await api(`/api/run/${S.run}/audit`);
+  v.append(el("h2", {}, "Audit"), el("p", { class: "lede" }, "Every input, model call, tool call, decision and export, chained by hash so any edit or deletion is detectable."),
+    el("div", { class: "notice " + (a.verify.ok ? "teal" : "red") }, a.verify.message + ` (${a.verify.entries} entries)`),
+    el("div", { style: "overflow:auto" }, el("table", {}, el("thead", {}, el("tr", {}, ["#", "Time (UTC)", "Event", "Actor", "Data"].map(h => el("th", {}, h)))),
+      el("tbody", {}, a.entries.slice().reverse().map(e => el("tr", {}, el("td", {}, e.n), el("td", {}, e.ts), el("td", {}, e.event), el("td", {}, e.actor), el("td", {}, JSON.stringify(e.data).slice(0, 160))))))));
+}
+
+// ------------------------------------------------------------------ new run
+async function newRun() {
+  const samples = S.app.demo_samples ? await api("/api/samples") : [], d = $("#dlg"), demo = samples.length > 0;
+  const pick = (role, type) => samples.filter(s => s.role === role).map(s => el("label", { style: "display:block" }, el("input", { type, name: role, value: s.name }), " " + s.name, el("span", { class: "chip amber" }, "DEMO sample"), s.group === "real_format" ? el("span", { class: "chip teal" }, "real layout") : el("span", { class: "chip" }, "synthetic"), s.kind ? el("span", { class: "src" }, " " + s.kind) : null));
+  const upl = el("input", { type: "file", multiple: true, accept: ".xlsx,.zip,.csv", "aria-label": "Estate files" }), lic = el("input", { type: "file", accept: ".xlsx,.json,.csv", "aria-label": "Licensing file" }), notes = el("input", { type: "file", multiple: true, accept: ".txt,.md", "aria-label": "Interview notes" });
+  const label = el("input", { placeholder: "e.g. Customer A, September data" }), days = el("input", { type: "number", min: 1, placeholder: "e.g. 14" }), cust = el("input", { placeholder: "Anonymised customer label" });
+  const read = f => new Promise(res => { const r = new FileReader(); r.onload = () => res({ name: f.name, b64: r.result.split(",")[1] }); r.readAsDataURL(f); });
+  const field = (t, input, hint) => el("div", { class: "field" }, el("label", {}, t), input, hint ? el("div", { class: "src" }, hint) : null);
+  d.replaceChildren(el("h4", {}, "New run"),
+    el("p", { class: demo ? "notice amber" : "src" }, demo ? "DEMO MODE: bundled sample files are offered below. You can also upload your own." : "Upload your own files. Nothing is pre-loaded, and uploaded data stays on this machine."),
+    el("h3", {}, "Estate export (required)"), ...pick("estate", "checkbox"),
+    field(demo ? "or upload" : "Choose file(s)", upl, "Cloudamize: MPA export, OLA Accelerator export or Download All Reports (.xlsx). RVTools: the .xlsx export or a .zip of its CSV files."),
+    el("h3", {}, "Licensing input (optional)"), ...(demo ? [el("label", { style: "display:block" }, el("input", { type: "radio", name: "licsample", value: "", checked: true }), " none")] : []),
+    ...pick("licensing", "radio").map(x => { x.querySelector("input").name = "licsample"; return x; }),
+    field(demo ? "or upload" : "Choose file (optional)", lic, "The licensing analyst's workbook (.xlsx) or an A02 findings file (.json)."),
+    el("h3", {}, "Interview notes (optional)"), ...pick("notes", "checkbox"),
+    field(demo ? "or upload .txt/.md" : "Choose file(s) (optional)", notes, "Plain text or markdown. Treated as data, never as instructions."),
+    field("Label", label), field("Collection span in days, if known", days), field("Customer label on the deck", cust),
+    el("div", { class: "row", style: "margin-top:12px" }, el("button", { class: "btn good", onclick: async ev => {
+      const body = { samples: [...d.querySelectorAll("input[name=estate]:checked")].map(x => x.value), label: label.value, collection_days: +days.value || null, customer: cust.value };
+      if (!upl.files.length && !body.samples.length) return toast("Choose the estate file(s) to upload first", true);
+      if (upl.files.length) body.files = await Promise.all([...upl.files].map(read));
+      const ls = d.querySelector("input[name=licsample]:checked"); if (ls && ls.value) body.licensing_sample = ls.value; if (lic.files[0]) body.licensing = await read(lic.files[0]);
+      const ns = d.querySelector("input[name=notes]:checked"); if (ns) body.notes_sample = ns.value; if (notes.files.length) body.notes = await Promise.all([...notes.files].map(read));
+      ev.target.disabled = true; ev.target.textContent = "Processing\u2026";
+      try { const r = await api("/api/runs", body); d.close(); S.run = null; await loadRuns(false); await selectRun(r.run_id); toast("Run created"); } catch (e) { toast(e.message, true); ev.target.disabled = false; ev.target.textContent = "Create run"; } } }, "Create run"),
+      el("button", { class: "btn alt", onclick: () => d.close() }, "Cancel")));
+  d.showModal();
+}
+$("#newrun").addEventListener("click", newRun);
+$("#who").value = localStorage.getItem("cva.who") || ""; $("#who").addEventListener("input", e => localStorage.setItem("cva.who", e.target.value));
+(async () => {
+  try { S.app = await api("/api/app"); } catch (e) { /* older server: no samples */ }
+  if (S.app.signed_in) { $("#signout").hidden = false; $("#whoami").textContent = "Signed in as " + S.app.user; if (!$("#who").value.trim()) $("#who").value = S.app.user; }
+  const h = location.hash.slice(1).split("/");
+  if (h[0] && /^run-\d+$/.test(h[0])) { S.run = h[0]; S.view = h[1] || "overview"; await refresh(); }
+  await loadRuns(false);          // never open an earlier run by itself: a fresh page shows nothing until a run is chosen or created
+  render();
+})();
+</script>
+</body>
+</html>
