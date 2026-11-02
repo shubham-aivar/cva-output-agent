@@ -284,7 +284,7 @@ def build_placeholder(c: Ctx) -> Presentation:
     _stat(s, Inches(7.7), Inches(1.7), Inches(2.5), f"{c.fig('estate.workloads'):,}", "workloads assessed")
     _stat(s, Inches(10.35), Inches(1.7), Inches(2.4), str(c.fig("estate.data_grade")), res.meta["richness"]["label"])
     _stat(s, Inches(7.7), Inches(3.15), Inches(2.5), money(od, True), "On-Demand, per year", TEAL_L, TEAL)
-    _stat(s, Inches(10.35), Inches(3.15), Inches(2.4), money(r3, True), "3-year RI, per year", TEAL_L, TEAL)
+    _stat(s, Inches(10.35), Inches(3.15), Inches(2.4), money(r3, True), "3-year commitment, per year", TEAL_L, TEAL)
     byol = scen_by_id(res, "byol")
     _stat(s, Inches(7.7), Inches(4.6), Inches(5.05), money(byol.total, True) if byol and byol.total is not None else "not computable",
           "BYOL, per year" + ("" if byol and byol.status == "computed" else f"  ({byol.status.replace('_', ' ')})" if byol else ""),

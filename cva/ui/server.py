@@ -222,7 +222,7 @@ class Handler(BaseHTTPRequestHandler):
             if m:
                 rid, what = m.groups()
                 s = self.svc
-                table = {"overview": lambda: s.overview(rid), "workloads": lambda: s.workloads(rid),
+                table = {"overview": lambda: s.overview(rid), "workloads": lambda: s.workloads(rid), "services": lambda: s.service_catalog(rid),
                          "issues": lambda: s.issues(rid), "licensing": lambda: s.licensing(rid),
                          "parity": lambda: s.parity(rid), "figures": lambda: s.figures(rid), "gate": lambda: s.gate(rid),
                          "proposals": lambda: s.proposals(rid), "audit": lambda: s.audit_view(rid),
@@ -310,6 +310,8 @@ class Handler(BaseHTTPRequestHandler):
             raise ServiceError("unknown action")
         rid, act = m.groups()
         by = str(b.get("by", "")).strip()
+        if act == "rename":
+            return {"name": s.rename_run(rid, str(b.get("name", "")), by)}
         if act == "agent":
             return s.run_agent(rid, b.get("task") or None, b.get("mode", "stub"), actor=by or "agent")
         if act == "decide":
@@ -398,6 +400,7 @@ class Handler(BaseHTTPRequestHandler):
                if j else {"status": "idle", "events": [], "message": ""})
         v = self.svc.transform_view(rid)
         v["job"] = job
+        v["roadmap"] = self.svc.transform_roadmap(rid, job["status"], job.get("message", ""))
         return v
 
     def _start_transform(self, rid: str, by: str, b: dict[str, Any], resume: bool, suggest: bool = False, task: bool = False, listing: bool = False) -> dict[str, Any]:

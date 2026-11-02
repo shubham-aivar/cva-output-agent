@@ -1,6 +1,6 @@
 [project]
 name = "aivar-cva-agent"
-version = "0.12.2"
+version = "0.13.1"
 description = "A01 CVA Output Processing Agent for Project Elevate (Aivar Innovations)"
 requires-python = ">=3.11"
 dependencies = ["openpyxl>=3.1", "python-pptx>=1.0"]

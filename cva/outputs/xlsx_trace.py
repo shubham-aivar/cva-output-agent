@@ -56,10 +56,10 @@ def build_workbook(res: PipelineResult, state: dict[str, Any], gate: dict[str, A
     wl.title = "Workloads"
     heads = ["Workload", "Source rows", "OS", "Env", "Current vCPU", "Current RAM (GB)", "CPU avg %", "CPU peak %",
              "Sizing basis", "Confidence", "Recommended instance", "Rec vCPU", "Rec RAM (GB)", "Direction",
-             "On-Demand ($/yr)", "1-yr RI ($/yr)", "3-yr RI ($/yr)", "BYOL ($/yr)", "Infra ($/yr, On-Demand)",
+             "On-Demand ($/yr)", "1-yr commitment ($/yr)", "3-yr commitment ($/yr)", "BYOL ($/yr)", "Infra ($/yr, On-Demand)",
              "Windows lic ($/yr, On-Demand)", "SQL lic ($/yr, On-Demand)", "Storage ($/yr)",
              "BYOL treatment", "Lifecycle", "Flags and notes",
-             "AWS instance (recommended model)", "AWS On-Demand ($/yr)", "AWS 1-yr RI ($/yr)", "AWS 3-yr RI ($/yr)", "AWS storage ($/yr)", "AWS note"]
+             "AWS instance (recommended model)", "AWS On-Demand ($/yr)", "AWS 1-yr commitment ($/yr)", "AWS 3-yr commitment ($/yr)", "AWS storage ($/yr)", "AWS note"]
     wl.cell(1, 1, "Workload-level data behind every figure.  Each cost cell is an output of rule PR-INFRA / PR-LIC / "
                   "PR-STORAGE (see Ledger).  Costs use the catalog named on the Summary sheet.").font = Font(name=FONT, italic=True, size=9)
     _hdr(wl, 3, heads)

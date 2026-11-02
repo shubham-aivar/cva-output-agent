@@ -11,13 +11,13 @@ license = "li"
 
 [[scenario]]
 id = "ri_1yr"
-label = "1-year RI"
+label = "1-year commitment"
 purchase = "ri_1yr"
 license = "li"
 
 [[scenario]]
 id = "ri_3yr"
-label = "3-year RI"
+label = "3-year commitment"
 purchase = "ri_3yr"
 license = "li"
 

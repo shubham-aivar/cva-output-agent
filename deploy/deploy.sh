@@ -10,7 +10,7 @@ set -euo pipefail
 
 EXPECTED_ACCOUNT="604775478403"
 export AWS_REGION="us-east-1" AWS_DEFAULT_REGION="us-east-1" AWS_PAGER=""
-STACK="cva-a01-demo-02"; USERNAME="cva-output-agent"; SECRET="cva/a01/auth"; KEY="code/cva-latest.zip"
+STACK="cva-a01-demo"; USERNAME="cva-output-agent"; SECRET="cva/a01/auth"; KEY="code/cva-latest.zip"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 cmd="${1:-deploy}"
 
@@ -80,12 +80,8 @@ case "$cmd" in
     ensure_secret
     build_and_upload
     PL="$(aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing --query 'PrefixLists[0].PrefixListId' --output text)"
-    # VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query "Vpcs[0].VpcId" --output text)
-    # SUBNET_ID=$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" Name=defaultForAz,Values=true --query "Subnets[0].SubnetId" --output text)
-    VPC_ID=vpc-01e8c0036ae574090
-
-    SUBNET_ID=subnet-0eb4d135a18d6b6ac
- 
+    VPC_ID=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query "Vpcs[0].VpcId" --output text)
+    SUBNET_ID=$(aws ec2 describe-subnets --filters Name=vpc-id,Values="$VPC_ID" Name=defaultForAz,Values=true --query "Subnets[0].SubnetId" --output text)
     echo "Using default VPC $VPC_ID subnet $SUBNET_ID"
     [ -n "$PL" ] && [ "$PL" != "None" ] || { echo "CloudFront prefix list not found" >&2; exit 1; }
     aws cloudformation deploy --stack-name "$STACK" --template-file "$HERE/deploy/cloudformation.yaml" --capabilities CAPABILITY_IAM \

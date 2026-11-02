@@ -15,7 +15,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m cva demo --full          # narrated end-to-end run on SYNTHETIC data (needs LibreOffice for the PDF copy)
 python -m cva ui                   # the demo screen: http://127.0.0.1:8765
-python -m pytest                   # 313 tests
+python -m pytest                   # 318 tests
 ```
 `python scripts/make_samples.py` regenerates the synthetic estates, licensing inputs and interview notes.
 

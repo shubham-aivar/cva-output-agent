@@ -33,40 +33,40 @@ def evaluate(res: PipelineResult, state: dict[str, Any]) -> dict[str, Any]:
     warns = [i for i in res.issues if i.severity == "warn"]
     open_e = [i for i in errs if not is_acked(i, state)]
     open_w = [i for i in warns if not is_acked(i, state)]
-    add("errors", "Every error-level exception is acknowledged", not open_e,
-        f"{len(open_e)} of {len(errs)} open" if errs else "none raised")
-    add("warnings", "Every warning-level exception is acknowledged", not open_w,
-        f"{len(open_w)} of {len(warns)} open" if warns else "none raised")
+    add("errors", "Serious data problems are resolved or accepted", not open_e,
+        f"{len(open_e)} of {len(errs)} still open" if errs else "None found")
+    add("warnings", "Data warnings have been reviewed", not open_w,
+        f"{len(open_w)} of {len(warns)} still open" if warns else "None found")
     pend = [p for p in state["proposals"] if p["status"] == "pending"]
-    add("proposals", "Every agent proposal is decided", not pend,
+    add("proposals", "Agent suggestions are decided", not pend,
         f"{len(pend)} pending" if pend else f"{len(state['proposals'])} decided")
     out_n = res.parity_summary.get("outliers", 0)
     covered = out_n == 0 or bool(state["parity_reviewed"]) or \
         all(r.workload in state["sizing_overrides"] for r in res.parity_rows if r.status in ("ours_cheaper", "ours_costlier"))
-    add("parity", "Parity outliers are reviewed", covered,
-        "no outliers" if out_n == 0 else (f"{out_n} outlier(s); reviewed" if covered else f"{out_n} outlier(s) unreviewed"))
+    add("parity", "Cross-check differences are reviewed", covered,
+        "No differences found" if out_n == 0 else (f"{out_n} difference(s) reviewed" if covered else f"{out_n} difference(s) not yet reviewed"))
     byol = res.pricing.scenario("byol")
     lic_needs_ack = (res.licensing.mode == "none" or res.lic_cov["sql_gaps"] > 0 or (byol and byol.status != "computed"))
-    add("licensing", "The licensing position is acknowledged", (not lic_needs_ack) or bool(state["licensing_ack"]),
-        "complete" if not lic_needs_ack else
+    add("licensing", "The licensing position is accepted", (not lic_needs_ack) or bool(state["licensing_ack"]),
+        "Complete" if not lic_needs_ack else
         ("acknowledged: " + (state["licensing_ack"] or {}).get("note", "")) if state["licensing_ack"] else
-        f"BYOL status is '{byol.status if byol else 'n/a'}' with {res.lic_cov['sql_gaps']} SQL gap(s); a reviewer must acknowledge")
+        f"BYOL status: {(byol.status if byol else 'n/a').replace('_', ' ')}; {res.lic_cov['sql_gaps']} SQL Server item(s) lack licensing evidence. A reviewer must accept this position.")
     if res.aws is not None:
-        add("figures_source", "The figures source is settled", True, f"AWS Transform assessment '{res.aws.scenario_name}' imported", blocking=False)
+        add("figures_source", "The source of the figures is settled", True, f"AWS Transform assessment '{res.aws.scenario_name}' imported", blocking=False)
     elif not res.estimate_ran:
-        add("figures_source", "The figures source is settled (AWS Transform assessment imported, or A01's offline estimate run and accepted)",
+        add("figures_source", "The source of the figures is settled",
             False, "no cost figures exist yet: run or import an AWS Transform assessment, or run A01's offline estimate (fallback)")
     else:
         ack = state.get("estimate_ack")
-        add("figures_source", "The figures source is settled (AWS Transform assessment imported, or A01's offline estimate accepted)", bool(ack),
+        add("figures_source", "The source of the figures is settled", bool(ack),
             ("accepted: " + ack.get("note", "")) if ack else
             "figures are A01's own OFFLINE estimate on placeholder prices: import an AWS Transform assessment, or a reviewer must accept the estimate")
     conf = state["confirmed"]
     digest = figure_digest(res)
     ok_conf = bool(conf) and conf.get("digest") == digest
-    add("confirmed", "Figures are confirmed by a reviewer (and unchanged since)", ok_conf,
+    add("confirmed", "A reviewer has confirmed the figures", ok_conf,
         "confirmed by " + conf["by"] if ok_conf else
-        ("figures changed since the confirmation; confirm again" if conf else "not yet confirmed"))
+        ("figures changed since the confirmation; confirm again" if conf else "Not yet confirmed"))
     blocking_open = [c for c in checks if c["blocking"] and not c["ok"]]
     return {"ready": not blocking_open, "checks": checks, "open": len(blocking_open), "figure_digest": digest,
             "finalised": state["finalised"]}

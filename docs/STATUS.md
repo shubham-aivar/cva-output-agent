@@ -1,4 +1,15 @@
-# Status: what is verified, what is not  (version 0.12.1)
+# Status: what is verified, what is not  (version 0.13.1)
+
+## 0.13.1: the other tabs get the same treatment
+* Agent tab hidden (its code stays; the stub assistant is not a real agent, and the Bedrock mode is unverified).  Overview: KPI cards, plain labels, offline estimate tucked away.  Licensing: coverage cards, empty states.  Exceptions: severity cards (Needs fixing / Review / For information), readable messages.  Review and release: a checklist with progress and one Release button; notes and time tracking collapsed.  Outputs: download cards.  Audit: a readable timeline; automatic system steps hidden unless ticked.
+* Not verified on a live job; the screens were rendered on fixture data.
+
+## 0.13.0: presentation pass for the public demo (no change to what the agent does)
+* Runs are named after the customer (name and date in the run list and the header; `run-NNNN` stays the internal id).  The new-run form asks for the customer name first; a run can be renamed (recorded in the audit).
+* AWS Transform tab: the raw log is gone.  A roadmap (workspace, job, inventory, configuration review, assessment, import) is built from the audit trail in plain language, with a spinner on the running step.  A question or approval opens inside the step that needs the person; after it, the step shows who approved and how many suggestions were exchanged.  Buttons reworded (Approve and start the assessment, Send to AWS Transform, Review the exact configuration, Refresh status).  Diagnostics moved under Support.
+* Workloads tab: grouped by AWS service (EC2, RDS for SQL Server, EBS, S3, not assessed) with a cost card per service, filters and expandable rows.  SQL Server hosts that moved to RDS now show their target class and cost instead of blanks.
+* Scenario labels: \"1-year / 3-year commitment\" (No Upfront).  AWS Transform prices servers with Reserved Instances but SQL Server databases with Database Savings Plans, so \"RI\" alone was wrong; a note on the Overview says so.  Ingram's own deck wording (NURI) is unchanged.
+* Not verified: the new screens on a live AWS job (checked with fixtures and a browser render).
 
 ## 0.12.1: the deck is filled from AWS Transform's own outputs; the database sheets are read
 * Why the two decks differed (seen on a real 231-server MPA run): A01 filled the scope slides from the inventory, which had no OS, environment, CPU or storage columns, so it printed 0 Windows, 0 Linux, 0 zombies.  AWS's business case deck had 188 Windows, 38 Linux, 15 SQL, 89.41 TiB.  The cost totals were always the same data (A01's slides show infrastructure only, $598K; AWS's business case adds support, $643,857).

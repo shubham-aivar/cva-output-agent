@@ -16,6 +16,7 @@ from pptx import Presentation
 
 from cva.config import load_config, load_toml
 from cva.ingest import rvtools
+from cva.service import ServiceError
 from cva.transform import enrichment, guard, results
 from cva.transform.driver import AssessmentDriver, DriverInputs, NeedsHuman
 from cva.transform.mcp_client import ALLOWED_TOOLS, BLOCKED_TOOLS, McpToolClient, ToolBlocked, ToolError
@@ -1361,10 +1362,10 @@ def test_ui_asks_for_approval_and_relays_it_with_no_typing_in_the_aws_chat(ui):
 
 def test_the_page_offers_a_plain_approve_button_and_hides_the_externally_confirmed_option():
     html = (Path(__file__).resolve().parent.parent / "cva" / "ui" / "static" / "index.html").read_text()
-    assert "Approve and run" in html and "approve: true" in html and "Suggest a change, or ask AWS Transform something" in html and "transform_suggest" in html
+    assert "Approve and start the assessment" in html and "approve: true" in html and "Suggest a change or ask AWS Transform a question" in html and "transform_suggest" in html
     i = html.index("I already typed the go-ahead")
     adv = html.rfind('el("details", {}, el("summary", {}, "Advanced")', 0, i)
-    assert adv > html.rfind("Approve and run", 0, i) and adv != -1                                       # the old option sits inside an Advanced section
+    assert adv > html.rfind("Approve and start the assessment", 0, i) and adv != -1                                       # the old option sits inside an Advanced section
 
 
 # ------------------------------------------------------------------------------------------------ the loop: approve, or suggest; AWS Transform answers; approve again
@@ -2464,7 +2465,7 @@ def test_the_deck_and_workbook_export_from_aws_sizing_alone_and_say_so(svc, tmp_
     wb = load_workbook(out["files"]["workbook"])
     wl = wb["Workloads"]
     heads = [c.value for c in wl[3]]
-    assert {"AWS instance (recommended model)", "AWS On-Demand ($/yr)", "AWS 3-yr RI ($/yr)", "AWS storage ($/yr)"} <= set(heads)
+    assert {"AWS instance (recommended model)", "AWS On-Demand ($/yr)", "AWS 3-yr commitment ($/yr)", "AWS storage ($/yr)"} <= set(heads)
     row = next(r for r in wl.iter_rows(min_row=4, values_only=True) if r[0] == "WEB-P01")
     ps = parse_analysis(FIX / "analysis_run2.xlsx")["per_server"]["web-p01"]
     assert row[heads.index("AWS On-Demand ($/yr)")] == round(ps["models"]["on_demand"]["total"] + ps.get("storage_annual", 0.0), 2)
@@ -2505,8 +2506,8 @@ def test_the_whole_automatic_journey_gives_aws_sizing_in_the_tabs_and_exports_wi
 
 def test_the_page_shows_aws_per_server_sizing_on_workloads_and_the_reconciliation_on_the_aws_tab():
     html = (ROOT / "cva" / "ui" / "static" / "index.html").read_text()
-    for s in ("AWS instance", "On-Demand / yr (AWS)", "3-yr RI / yr (AWS)", "AWS Transform per-server result", "Per-server results", "does not add up", "do not add up to AWS Transform's own totals", "Sheets of the analysis workbook",
-              "Rightsizing (AWS Transform)", "not in AWS results"):
+    for s in ("AWS recommends", "Workloads by AWS service", "AWS Transform per-server result", "Per-server results", "does not add up", "do not add up to AWS Transform's own totals", "Sheets of the analysis workbook",
+              "Rightsizing (AWS Transform)"):
         assert s in html, s
 
 
@@ -3310,3 +3311,91 @@ def test_the_conversation_shows_who_said_what_from_the_audit_trail_and_invents_n
         ("Rev", "Use 40% CPU for all servers"), ("AWS Transform", "Understood: 40% CPU."), ("Rev", "Approved: the go-ahead was sen")]
     assert "does NOT match" in t[1]["text"]
     assert svc.transform_view(rid)["conversation"] == t
+
+
+# ------------------------------------------------------------------------------------------------ presentation: names, roadmap, services (0.13.0)
+def _import_with_database(svc, rid, tmp_path, rename_db1=None):
+    import openpyxl
+
+    from tests.test_ingram_ola import _workbook_with_database
+    p = _workbook_with_database(tmp_path)
+    if rename_db1:
+        wb = openpyxl.load_workbook(p)
+        for ws in wb.worksheets:
+            for row in ws.iter_rows():
+                for c in row:
+                    if isinstance(c.value, str) and c.value.startswith("db1.corp.local"):
+                        c.value = c.value.replace("db1.corp.local", rename_db1)
+        wb.save(p)
+    f = tmp_path / "res"
+    f.mkdir(exist_ok=True)
+    for n in ("aggregated_output.json", "error_file.csv"):
+        (f / n).write_bytes((FIX / n).read_bytes())
+    shutil.copy(p, f / "analysis_20261020_202003.xlsx")
+    svc.import_transform_results(rid, str(f), "t")
+
+
+def test_runs_are_named_after_the_customer_and_can_be_renamed(svc):
+    rid = svc.create_run([str(FIX / "rvtools_sample.xlsx")], as_of="2026-10-20", customer_label="Acme Retail")
+    assert svc.list_runs()[0]["name"] == "Acme Retail" and svc.overview(rid)["name"] == "Acme Retail" and rid.startswith("run-")
+    other = svc.create_run([str(FIX / "rvtools_sample.xlsx")], as_of="2026-10-20")
+    assert [r["name"] for r in svc.list_runs()][1] == "rvtools sample"           # no customer: the file's name, never the id
+    svc.rename_run(other, "  Northwind   Traders ", "tester")
+    assert svc.overview(other)["name"] == "Northwind Traders"
+    with pytest.raises(ServiceError):
+        svc.rename_run(other, "", "tester")
+    with pytest.raises(ServiceError):
+        svc.rename_run(other, "x", "")
+
+
+def test_the_roadmap_reads_the_audit_trail_in_plain_language(svc):
+    rid = svc.create_run([str(FIX / "rvtools_sample.xlsx")], as_of="2026-10-20")
+    assert svc.transform_roadmap(rid)["steps"] == []
+    a = svc.audit(rid)
+    for ev, d in (("transform_tool", {"tool": "create_workspace"}), ("transform_job_created", {"workspaceId": "w", "jobId": "job-12345678"}), ("transform_tool", {"tool": "upload_artifact"})):
+        a.append(ev, d, "driver")
+    st = lambda r: {s["key"]: s["state"] for s in r["steps"]}  # noqa: E731
+    r = svc.transform_roadmap(rid, "running")
+    assert st(r) == {"workspace": "done", "job": "done", "inventory": "done", "configuration": "active", "assessment": "pending", "import": "pending"}
+    assert "analysing" in r["steps"][3]["title"] and not any("{" in s["title"] or "_" in s["title"] for s in r["steps"])
+    s2 = svc.store.state(rid)
+    s2["transform_pending"] = {"kind": "approval", "workspaceId": "w", "jobId": "j"}
+    svc.store.save_state(rid, s2)
+    r = svc.transform_roadmap(rid, "needs_person")
+    assert st(r)["configuration"] == "needs_you" and r["steps"][3]["title"] == "Your approval is needed"
+    a.append("transform_approved_by_person", {}, "Asha")
+    s2["transform_pending"] = None
+    svc.store.save_state(rid, s2)
+    r = svc.transform_roadmap(rid, "running")
+    assert st(r)["configuration"] == "done" and st(r)["assessment"] == "active" and r["approved_by"] == "Asha" and "Approved by Asha" in r["steps"][3]["detail"]
+    assert svc.transform_roadmap(rid, "error", "boom")["steps"][4]["state"] == "error"
+
+
+def test_workloads_are_grouped_by_aws_service_and_databases_get_their_own_group(svc, tmp_path):
+    rid = svc.create_run([str(FIX / "rvtools_sample.xlsx")], as_of="2026-10-20")
+    _import_with_database(svc, rid, tmp_path, rename_db1="WEB-P01")
+    c = svc.service_catalog(rid)
+    keys = [b["key"] for b in c["services"]]
+    assert keys[:2] == ["ec2", "rds"] and "ebs" in keys and "s3" in keys
+    rds = next(b for b in c["services"] if b["key"] == "rds")
+    assert [i["name"] for i in rds["items"]] == ["WEB-P01"] and rds["items"][0]["annual"] and rds["items"][0]["target"] == "db.m8i.xlarge"
+    ec2 = next(b for b in c["services"] if b["key"] == "ec2")
+    assert not any(i["name"] == "WEB-P01" for i in ec2["items"])                    # a server is in exactly one group
+    assert abs(sum(b["share"] for b in c["services"] if b["share"] is not None) - 100) < 0.5
+    assert svc.workloads(rid)                                                       # the flat list is unchanged for the agent and the exports
+
+
+def test_the_commitment_scenarios_are_not_called_reserved_instances_only(svc, tmp_path):
+    rid = svc.create_run([str(FIX / "rvtools_sample.xlsx")], as_of="2026-10-20")
+    _import_with_database(svc, rid, tmp_path)
+    labels = [s["label"] for s in svc.overview(rid)["scenarios"]]
+    assert "1-year commitment" in labels and "3-year commitment" in labels and not any("RI" in x.split() for x in labels)
+    assert "Reserved Instances" in svc.overview(rid)["commitment_note"]
+
+
+def test_the_agent_tab_is_hidden_but_its_code_is_kept_and_the_release_checks_read_plainly():
+    html = (ROOT / "cva" / "ui" / "static" / "index.html").read_text()
+    nav = html[html.index("const VIEWS"):html.index("\n", html.index("const VIEWS"))]
+    assert '"Agent"' not in nav and "async function agent(v)" in html
+    gate = (ROOT / "cva" / "review" / "gate.py").read_text()
+    assert "Cross-check differences are reviewed" in gate and "Parity outliers" not in gate

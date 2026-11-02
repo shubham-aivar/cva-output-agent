@@ -39,6 +39,10 @@ from .transform.adapter import ConsoleFallbackAdapter, get_adapter
 from .util import now_iso
 
 
+def num_s(v: Any) -> str:
+    return "?" if v in (None, "") else f"{float(v):,.0f}" if float(v) == int(float(v)) else f"{float(v):,.1f}"
+
+
 class ServiceError(Exception):
     pass
 
@@ -118,9 +122,43 @@ class Service:
         out = []
         for rid in self.store.list_runs():
             m, st = self.store.manifest(rid), self.store.state(rid)
-            out.append({"run_id": rid, "created": m["created"], "label": m.get("label", ""), "files": m["files"],
+            out.append({"run_id": rid, "created": m["created"], "label": m.get("label", ""), "files": m["files"], "name": self.display_name(m),
                         "finalised": bool(st["finalised"])})
         return out
+
+    # ------------------------------------------------------------------ names shown to people
+    @staticmethod
+    def display_name(m: dict[str, Any]) -> str:
+        """What a run is called on screen: the customer, else the note, else the file's name.  The id (run-NNNN) stays the internal key."""
+        n = str(m.get("customer_label") or "").strip() or str(m.get("label") or "").strip()
+        if not n and m.get("files"):
+            n = Path(str(m["files"][0])).stem.replace("_", " ").replace("-", " ").strip()
+        return n or "Untitled assessment"
+
+    def rename_run(self, rid: str, name: str, by: str) -> str:
+        name = " ".join(str(name).split())
+        if not by.strip():
+            raise ServiceError("say who is renaming this (your name is recorded)")
+        if not name or len(name) > 80:
+            raise ServiceError("type a customer name of 1 to 80 characters")
+        with self.lock:
+            m = self.store.manifest(rid)
+            old = m.get("customer_label")
+            m["customer_label"] = name
+            (self.store.path(rid) / "manifest.json").write_text(json.dumps(m, indent=2), encoding="utf-8")
+        self.audit(rid).append("run_renamed", {"from": old, "to": name}, by)
+        self._cache.pop(rid, None)
+        return name
+
+    def commitment_note(self, rid: str) -> str | None:
+        """Honest wording for the 1-year / 3-year scenarios: what AWS Transform priced them as, per service."""
+        res = self.result(rid)
+        if not res.aws:
+            return None
+        txt = " ".join(str(x) for x in (res.aws.rds.get("notes") or [])) + " " + " ".join(str(v) for v in (res.aws.rds.get("overview") or {}).values())
+        sp = "savings plan" in txt.lower()
+        return ("Commitment scenarios are priced with No Upfront payment. For servers (Amazon EC2) AWS Transform uses Reserved Instances"
+                + ("; for SQL Server databases (Amazon RDS) it applies Database Savings Plans." if sp else "."))
 
     # ------------------------------------------------------------------ views
     def overview(self, rid: str) -> dict[str, Any]:
@@ -128,7 +166,7 @@ class Service:
         g = gate_mod.evaluate(res, st)
         led = {f.key: f.value for f in res.ledger.all()}
         return {
-            "run_id": rid, "estimate_ran": res.estimate_ran, "sizing_source": res.sizing_source, "aws_servers": len(res.aws.per_server) if res.aws else 0, "manifest": self.store.manifest(rid), "meta": res.meta, "gate": g,
+            "run_id": rid, "estimate_ran": res.estimate_ran, "sizing_source": res.sizing_source, "aws_servers": len(res.aws.per_server) if res.aws else 0, "manifest": self.store.manifest(rid), "name": self.display_name(self.store.manifest(rid)), "commitment_note": self.commitment_note(rid), "meta": res.meta, "gate": g,
             "finalised": st["finalised"], "estate": {"workloads": len(res.estate.workloads), "files": res.estate.files,
                                                       "basis": res.estate.data_basis, "days": res.estate.collection_days,
                                                       "notes": res.estate.notes},
@@ -188,6 +226,83 @@ class Service:
                         "on_demand": od.total if od else None, "lifecycle": lc.get(w.name, []),
                         "flags": sz.flags if sz else [], "estimate_ran": res.estimate_ran, "aws": aw, "sizing_source": res.sizing_source})
         return out
+
+    def service_catalog(self, rid: str) -> dict[str, Any]:
+        """The estate grouped by the AWS service each finding belongs to, with cost per service (AWS Transform's recommended pricing model)."""
+        from .transform.analysis import short_name
+        res = self.result(rid)
+        rows = self.workloads(rid)
+        a = res.aws
+        rec = a.recommended if a else None
+        slug = rec.slug if rec else "three_year_nuri"
+        model_label = (rec.label if rec else None) or "recommended pricing model"
+        rds = (a.rds.get("instances") if a else None) or []
+        rds_by = {i.get("short"): i for i in rds}
+        excl = {short_name(x.get("name", "").split("\\")[0]): x for x in (a.excluded if a else [])}
+        svc: dict[str, dict[str, Any]] = {}
+
+        def bucket(key: str, name: str, blurb: str) -> dict[str, Any]:
+            return svc.setdefault(key, {"key": key, "name": name, "blurb": blurb, "items": [], "annual": None, "count": 0})
+
+        for r in rows:
+            sn = short_name(r["name"])
+            z = r.get("aws") or {}
+            lc = r.get("lifecycle") or []
+            if sn in rds_by:
+                i = rds_by[sn]
+                m = (i.get("models") or {}).get(slug) or next(iter((i.get("models") or {}).values()), {})
+                cost = sum(m.get(k) or 0 for k in ("compute", "license", "storage", "backup", "sa")) if m else None
+                bucket("rds", "Amazon RDS for SQL Server", "Managed SQL Server databases (before AWS credits)")["items"].append({
+                    "name": r["name"], "env": i.get("env") or r.get("env"), "now": f"{num_s(i.get('src_vcpus') or r.get('vcpu'))} vCPU / {num_s(i.get('src_ram_gb') or r.get('ram_gb'))} GB",
+                    "target": i.get("target_class") or "—", "detail": " ".join(x for x in [str(i.get("edition") or ""), f"peak CPU {round(i['peak_cpu'])}%" if i.get("peak_cpu") is not None else ""] if x),
+                    "annual": cost, "direction": None, "confidence": None, "lifecycle": lc, "option": (m or {}).get("option")})
+            elif sn in excl and not (z.get("matched")):
+                x = excl[sn]
+                bucket("excluded", "Not assessed", "Resources AWS Transform left out of the assessment")["items"].append(
+                    {"name": r["name"], "env": r.get("env"), "now": "", "target": "—", "detail": x.get("reason") or x.get("type") or "Excluded by AWS Transform", "annual": None, "lifecycle": lc})
+            elif z.get("matched"):
+                m = (z.get("models") or {}).get(slug) or next(iter((z.get("models") or {}).values()), {})
+                bucket("ec2", "Amazon EC2", "Virtual servers, right-sized by AWS Transform")["items"].append({
+                    "name": r["name"], "env": r.get("env"), "os": r.get("os"), "now": f"{num_s(r.get('vcpu'))} vCPU / {num_s(r.get('ram_gb'))} GB",
+                    "target": z.get("instance"), "target_spec": f"{num_s(z.get('vcpu'))} vCPU / {num_s(z.get('ram_gb'))} GB", "detail": "", "annual": (m or {}).get("total"),
+                    "direction": z.get("direction"), "confidence": z.get("confidence"), "lifecycle": lc, "storage": z.get("storage"), "issues": len(z.get("issues") or [])})
+            elif a is None and r.get("instance"):
+                bucket("ec2", "Amazon EC2", "Virtual servers (A01 offline estimate)")["items"].append({
+                    "name": r["name"], "env": r.get("env"), "os": r.get("os"), "now": f"{num_s(r.get('vcpu'))} vCPU / {num_s(r.get('ram_gb'))} GB", "target": r["instance"], "detail": "",
+                    "annual": r.get("on_demand"), "direction": r.get("direction"), "confidence": r.get("confidence"), "lifecycle": lc})
+            else:
+                bucket("other", "Awaiting assessment" if a is None else "Not matched to AWS results", "Inventory items without an AWS sizing result")["items"].append(
+                    {"name": r["name"], "env": r.get("env"), "os": r.get("os"), "now": f"{num_s(r.get('vcpu'))} vCPU / {num_s(r.get('ram_gb'))} GB", "target": "—",
+                     "detail": (z.get("reason") or "") if z else "", "annual": None, "lifecycle": lc})
+        if a:                                                   # services that are not per-server rows
+            stor = [(z.get("storage") or 0, z.get("volumes") or 0) for z in (v.get("aws") or {} for v in rows) if z.get("matched")]
+            sv, nv = sum(x[0] for x in stor), sum(x[1] for x in stor)
+            if sv:
+                b = bucket("ebs", "Amazon EBS", "Block storage attached to the servers")
+                b.update({"annual": round(sv, 2), "count": nv, "unit": "volumes", "items": []})
+            if a.s3_annual:
+                b = bucket("s3", "Amazon S3", "Object storage")
+                b.update({"annual": round(a.s3_annual, 2), "count": None, "unit": "", "items": []})
+        order = ["ec2", "rds", "ebs", "s3", "other", "excluded"]
+        out = []
+        for k in order:
+            b = svc.get(k)
+            if not b:
+                continue
+            if b["items"]:
+                b["count"], b["unit"] = len(b["items"]), "servers" if k in ("ec2", "other") else "databases" if k == "rds" else "resources"
+                costs = [x["annual"] for x in b["items"] if x.get("annual") is not None]
+                b["annual"] = round(sum(costs), 2) if costs else None
+                for flag in ("upsize", "downsize", "same"):
+                    b[flag] = sum(1 for x in b["items"] if x.get("direction") == flag)
+                b["eos"] = sum(1 for x in b["items"] if "end_of_support" in (x.get("lifecycle") or []))
+            out.append(b)
+        total = sum(b["annual"] or 0 for b in out if b["key"] in ("ec2", "rds", "ebs", "s3"))
+        for b in out:
+            b["share"] = round(100 * (b["annual"] or 0) / total, 1) if total and b["key"] in ("ec2", "rds", "ebs", "s3") else None
+        return {"services": out, "total": round(total, 2) if total else None, "model": model_label, "from_aws": a is not None,
+                "note": ("Costs are AWS Transform's annual figures for its recommended pricing model; RDS is shown before AWS credits and AWS's support charge is not allocated to individual services."
+                         if a else "Costs are A01's own offline estimate on placeholder prices.")}
 
     def workload(self, rid: str, name: str) -> dict[str, Any]:
         from .agent.tools import ToolBox
@@ -455,6 +570,87 @@ class Service:
             "must_contain": [m["label"] if isinstance(m, dict) else m for m in tcfg["expected"]["must_contain"]],
             "source_kind": res.estate.source_kind, "listed_input": res.estate.source_kind in ("rvtools", "cloudamize_mpa"),
         }
+
+    # ------------------------------------------------------------------ roadmap (the AWS Transform tab, in plain language)
+    def transform_roadmap(self, rid: str, job_status: str = "idle", job_message: str = "") -> dict[str, Any]:
+        """The AWS Transform run as a short list of steps a person can follow, built from the audit trail (never from raw log text).
+        Each step: key, title, state (done | active | needs_you | pending | error | stopped), detail (one plain sentence) and ts."""
+        res, st = self.result(rid), self.store.state(rid)
+        ents = [e for e in self.audit(rid).entries() if str(e.get("event", "")).startswith("transform")]
+        starts = [i for i, e in enumerate(ents) if e["event"] == "transform_tool" and (e.get("data") or {}).get("tool") == "create_workspace"]
+        ents = ents[starts[-1]:] if starts else ents
+        tools = {}
+        for e in ents:
+            if e["event"] == "transform_tool":
+                tools.setdefault((e.get("data") or {}).get("tool"), e)
+        ev = {}
+        for e in ents:
+            ev.setdefault(e["event"], e)
+        imported = res.aws is not None
+        pend = st.get("transform_pending")
+        if not ents and not pend:
+            return {"mode": "imported" if imported else "idle", "steps": [], "status": job_status}
+        job_e = ev.get("transform_job_created") or ev.get("transform_job_resumed")
+        ws_done = "create_workspace" in tools or job_e is not None
+        job_done = job_e is not None
+        sent = "upload_artifact" in tools or "send_message" in tools
+        appr = ev.get("transform_approved_by_person") or ev.get("transform_confirmed_externally")
+        completed = ev.get("transform_run_completed") is not None or imported
+        suggestions = sum(1 for e in ents if e["event"] == "transform_suggestion_relayed")
+        jid = (job_e or {}).get("data", {}).get("jobId") or (st.get("transform_job") or {}).get("jobId") or ""
+        who = (appr or {}).get("actor") or ""
+        running = job_status == "running"
+        stage = 5 if completed else 4 if appr else 3 if sent else 2 if job_done else 1 if ws_done else 0   # index of the first step that is not finished
+        kind = (pend or {}).get("kind")
+        titles_you = {"approval": "Your approval is needed", "question": "AWS Transform has a question for you", "connection": "AWS connection needs attention",
+                      "task": "An approval task is waiting for you"}
+        title_you = titles_you.get(kind or "", "AWS Transform is waiting for you")
+        if kind == "approval" and (pend or {}).get("needs_listing"):
+            title_you = "Review the reply, then confirm the configuration"
+        steps = [
+            {"key": "workspace", "title": "Workspace created", "detail": "A dedicated AWS Transform workspace holds this assessment.", "ts": (tools.get("create_workspace") or {}).get("ts")},
+            {"key": "job", "title": "Assessment job created and started", "detail": f"Job {jid[:8]}… is registered in AWS Transform." if jid else "The job is registered in AWS Transform.", "ts": (job_e or {}).get("ts")},
+            {"key": "inventory", "title": "Server inventory and assessment settings submitted", "detail": "Region, pricing models, tenancy and optimisation preference were sent together with the inventory.",
+             "ts": (tools.get("upload_artifact") or tools.get("send_message") or {}).get("ts")},
+            {"key": "configuration", "title": "Configuration prepared and reviewed", "ts": (appr or {}).get("ts"),
+             "detail": (f"Approved by {who}" if who else "Approved") + (f" after {suggestions} suggestion(s) exchanged with AWS Transform." if suggestions else ".")},
+            {"key": "assessment", "title": "Assessment completed", "detail": "Sizing, pricing and the business case were produced.", "ts": (ev.get("transform_run_completed") or {}).get("ts")},
+            {"key": "import", "title": "Results retrieved and imported", "ts": (ev.get("transform_run_completed") or {}).get("ts"),
+             "detail": (f"{len(res.aws.per_server)} servers analysed across {len(res.aws.models)} pricing models." if imported else "")},
+        ]
+        for i, s in enumerate(steps):
+            s["state"] = "done" if (completed or i < stage) else "pending"
+            if s["state"] == "pending":
+                s["title"] = {"configuration": "Configuration review", "assessment": "Assessment: sizing, pricing and business case", "import": "Results retrieved and imported"}.get(s["key"], s["title"])
+                s["detail"] = ""
+        if not completed:
+            cur = steps[min(stage, 4)] if stage < 5 else steps[5]
+            if stage in (0, 1, 2) and pend:
+                cur["state"], cur["title"], cur["detail"] = "needs_you", title_you, ""
+            elif stage in (0, 1, 2):
+                cur["state"] = "active" if running else "stopped"
+                cur["title"] = {0: "Creating the workspace", 1: "Creating the assessment job", 2: "Submitting the inventory and settings"}[stage]
+                cur["detail"] = "In progress…" if running else (job_message or "This step did not finish. You can start the assessment again.")
+            elif stage == 3:                                  # AWS Transform prepares its configuration, a person approves it
+                if pend:
+                    cur["state"], cur["title"], cur["detail"] = "needs_you", title_you, ""
+                else:
+                    cur["state"] = "active" if running else "stopped"
+                    cur["title"] = "AWS Transform is analysing the inventory and preparing its configuration"
+                    cur["detail"] = "This usually takes a few minutes." if running else (job_message or "Paused. Resume from this step when you are ready.")
+            elif stage == 4:                                  # approved: the assessment itself runs
+                if pend:
+                    cur["state"], cur["title"], cur["detail"] = "needs_you", title_you, ""
+                else:
+                    cur["state"] = "active" if running else "stopped"
+                    cur["title"] = "Assessment in progress: sizing servers, pricing and building the business case"
+                    cur["detail"] = "This can take several minutes. You can leave this page; progress is saved." if running else (job_message or "Paused. Resume to keep waiting for the results.")
+            if job_status == "error" and not pend:
+                cur["state"], cur["detail"] = "error", job_message or "Something went wrong."
+            steps[min(stage, 5)] = cur
+        elif stage == 5 and not imported:
+            steps[5]["state"] = "active"
+        return {"mode": "job", "steps": steps, "status": job_status, "message": job_message, "pending_kind": kind, "suggestions": suggestions, "approved_by": who or None}
 
     def ack_estimate(self, rid: str, by: str, note: str) -> None:
         """A reviewer accepts that this release uses A01's offline estimate (no AWS Transform assessment imported)."""

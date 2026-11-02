@@ -220,11 +220,11 @@ def _plan_narrative() -> Plan:
     sql_cov = v("licensing.coverage_sql")
     texts = {
         "executive_summary": f"{v('estate.workloads')} workloads were assessed. The data is graded {v('estate.data_grade')}. "
-                             + (f"On-Demand costs {money('scenario.on_demand.total')} a year and the 3-year RI scenario "
+                             + (f"On-Demand costs {money('scenario.on_demand.total')} a year and the 3-year commitment scenario "
                                 f"{money('scenario.ri_3yr.total')}. {byol}." if "scenario.on_demand.total" in figs else
                                 "No cost figures exist yet: they come from an AWS Transform assessment."),
-        "cost_comparison": (f"Annual totals: On-Demand {money('scenario.on_demand.total')}, 1-year RI "
-                            f"{money('scenario.ri_1yr.total')}, 3-year RI {money('scenario.ri_3yr.total')}, BYOL "
+        "cost_comparison": (f"Annual totals: On-Demand {money('scenario.on_demand.total')}, 1-year commitment "
+                            f"{money('scenario.ri_1yr.total')}, 3-year commitment {money('scenario.ri_3yr.total')}, BYOL "
                             f"{money('scenario.byol.total')}." if "scenario.on_demand.total" in figs else
                             "No cost figures exist yet: they come from an AWS Transform assessment."),
         "rightsizing": (f"{v('sizing.downsize')} workloads are over-provisioned, {v('sizing.same')} are close to right-sized "

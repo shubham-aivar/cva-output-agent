@@ -27,11 +27,11 @@ def template_commentary(res: PipelineResult) -> dict[str, str]:
     src = f" Figures come from the {source_label(res)}."
     return {
         "executive_summary": (f"{g('estate.workloads')} workloads were assessed (data grade {g('estate.data_grade')}). "
-                              + (f"On-Demand costs {_money(g('scenario.on_demand.total'))} a year; the 3-year RI scenario "
+                              + (f"On-Demand costs {_money(g('scenario.on_demand.total'))} a year; the 3-year commitment scenario "
                                  f"{_money(g('scenario.ri_3yr.total'))}. {byol_txt}{ph}{src}" if g('scenario.on_demand.total') is not None else
                                  "No cost figures exist yet: they come from an AWS Transform assessment.")),
-        "cost_comparison": (f"Annual totals: On-Demand {_money(g('scenario.on_demand.total'))}, 1-year RI "
-                            f"{_money(g('scenario.ri_1yr.total'))}, 3-year RI {_money(g('scenario.ri_3yr.total'))}, BYOL "
+        "cost_comparison": (f"Annual totals: On-Demand {_money(g('scenario.on_demand.total'))}, 1-year commitment "
+                            f"{_money(g('scenario.ri_1yr.total'))}, 3-year commitment {_money(g('scenario.ri_3yr.total'))}, BYOL "
                             f"{_money(g('scenario.byol.total'))}.{ph}" if g('scenario.on_demand.total') is not None else
                             "No cost figures exist yet: they come from an AWS Transform assessment."),
         "rightsizing": ((f"{g('sizing.downsize')} workloads are over-provisioned, {g('sizing.same')} are close to "

@@ -95,7 +95,7 @@ def record_all(led: Ledger, estate: Estate, sizing: dict[str, SizingResult], pri
         led.add("aws.warnings", "AWS Transform warning rows", aws.warning_rows, "count", "AT-IMPORT", rv("AT-IMPORT"), ainp)
     od_t, r3_t = led.value("scenario.on_demand.total"), led.value("scenario.ri_3yr.total")
     if od_t and r3_t:
-        led.add("scenario.ri3_saving_pct", "3-year RI saving vs On-Demand", round(100 * (od_t - r3_t) / od_t, 1),
+        led.add("scenario.ri3_saving_pct", "3-year commitment saving vs On-Demand", round(100 * (od_t - r3_t) / od_t, 1),
                 "%", "PR-SCEN", rv("PR-SCEN"), {"on_demand": od_t, "ri_3yr": r3_t})
 
     led.add("licensing.bearing", "License-bearing items", lic_cov["bearing"], "count", "LI-GAP", rv("LI-GAP"))
